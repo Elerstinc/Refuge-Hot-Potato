@@ -5,13 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Refuge Hot Potato Timer</title>
 
+  <!-- Inline favicon so no /favicon.ico 404 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%92%A3%3C/text%3E%3C/svg%3E">
+
   <style>
     /* =========================
        CUSTOM FONT
+       FIX: Font file is in REPO ROOT
+       File name: Brianne_s_hand.ttf
+       Font family name inside file: Brianne's hand
        ========================= */
     @font-face {
       font-family: "Brianne's hand";
-      src: url("fonts/Brianne_s_hand.ttf") format("truetype");
+      src: url("Brianne_s_hand.ttf") format("truetype");
       font-weight: normal;
       font-style: normal;
     }
@@ -32,7 +38,7 @@
         #0f0f0f;
     }
 
-    /* Top-left menu */
+    /* Top-left menu (force next song) */
     .topLeftMenu{
       position: fixed;
       top: 14px;
@@ -47,6 +53,7 @@
       backdrop-filter: blur(6px);
       box-shadow: 0 16px 28px rgba(0,0,0,0.35);
       user-select: none;
+      z-index: 10;
     }
 
     .topLeftMenu label{
@@ -113,6 +120,7 @@
       font-size: 12px;
       opacity: 0.75;
       letter-spacing: 0.4px;
+      line-height: 1.2;
     }
   </style>
 </head>
@@ -146,7 +154,8 @@
     </div>
 
     <div class="hint">
-      Random music will not repeat until all 7 have been played.
+      Random music will not repeat until all 7 have been played.<br>
+      If a file is missing, check the browser Console for a 404.
     </div>
 
     <!-- Audio -->
@@ -167,7 +176,6 @@
     const clickAudio = document.getElementById("click");
     const musicAudio = document.getElementById("music");
 
-    // 7 songs + names
     const songs = [
       { file: "song1.mp3", name: "Pandemonium" },
       { file: "song2.mp3", name: "Mole Patrol" },
@@ -181,12 +189,139 @@
     let timerId = null;
     let remaining = 0;
 
-    // "Shuffle bag" so every song plays once before repeats
+    // Shuffle-bag: all songs once before any repeats
     let bag = [];
 
     function refillBag() {
       bag = Array.from({ length: songs.length }, (_, i) => i);
-
-      // Fisher-Yates shuffle
       for (let i = bag.length - 1; i > 0; i--) {
-        const
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+    }
+
+    function getNextRandomFromBag() {
+      if (bag.length === 0) refillBag();
+      return bag.pop();
+    }
+
+    function randomSeconds(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function setUI(running) {
+      startBtn.disabled = running;
+      stopBtn.disabled = !running;
+    }
+
+    function stopMusic() {
+      musicAudio.pause();
+      musicAudio.currentTime = 0;
+      musicAudio.removeAttribute("src");
+      musicAudio.load();
+      nowPlayingEl.textContent = "Now playing: none";
+    }
+
+    // Useful error messages if files are missing
+    musicAudio.addEventListener("error", () => {
+      statusEl.textContent = "Music failed to load (404?). Check that song1.mp3...song7.mp3 exist with exact names.";
+    });
+    boomAudio.addEventListener("error", () => {
+      statusEl.textContent = "boom.mp3 failed to load (404?). Check file name.";
+    });
+    clickAudio.addEventListener("error", () => {
+      statusEl.textContent = "click.mp3 failed to load (404?). Check file name.";
+    });
+
+    async function startMusic() {
+      const forced = nextSongSelect.value;
+
+      let idx;
+      if (forced !== "random") {
+        idx = Number(forced);
+        // Forced song does NOT affect bag tracking
+        nextSongSelect.value = "random";
+      } else {
+        idx = getNextRandomFromBag();
+      }
+
+      const song = songs[idx];
+
+      // Force load + play
+      musicAudio.pause();
+      musicAudio.currentTime = 0;
+      musicAudio.src = song.file;
+      musicAudio.loop = true;
+      musicAudio.load();
+
+      nowPlayingEl.textContent = `Now playing: ${song.name}`;
+
+      try {
+        await musicAudio.play();
+      } catch (e) {
+        statusEl.textContent = "Audio blocked by browser. Try clicking Start again (or interact once with the page).";
+        console.error("music play() failed:", e);
+      }
+    }
+
+    async function playBoom() {
+      boomAudio.currentTime = 0;
+      try { await boomAudio.play(); }
+      catch (e) { console.error("boom play() failed:", e); }
+    }
+
+    async function playClick() {
+      clickAudio.currentTime = 0;
+      try { await clickAudio.play(); }
+      catch (e) { console.error("click play() failed:", e); }
+    }
+
+    async function stopTimer() {
+      await playClick();
+
+      if (timerId) clearInterval(timerId);
+      timerId = null;
+      remaining = 0;
+
+      stopMusic();
+      setUI(false);
+      statusEl.textContent = "Sequence aborted.";
+      timeEl.textContent = "--";
+    }
+
+    async function startTimer() {
+      remaining = randomSeconds(10, 40);
+      timeEl.textContent = remaining;
+
+      statusEl.textContent = "Detonation sequence armed.";
+      setUI(true);
+
+      await startMusic();
+
+      if (timerId) clearInterval(timerId);
+
+      timerId = setInterval(async () => {
+        remaining--;
+        timeEl.textContent = remaining;
+
+        if (remaining <= 0) {
+          clearInterval(timerId);
+          timerId = null;
+
+          stopMusic();
+          setUI(false);
+
+          statusEl.textContent = "💥 Detonation complete.";
+          await playBoom();
+        }
+      }, 1000);
+    }
+
+    // Start randomized immediately
+    refillBag();
+
+    startBtn.addEventListener("click", startTimer);
+    stopBtn.addEventListener("click", stopTimer);
+  </script>
+</body>
+</html>
