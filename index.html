@@ -408,44 +408,20 @@
         playBoom();
       }
     }
-	
-	async function unlockAudio() {
-  const audios = [boomAudio, clickAudio, heartbeatAudio, musicAudio];
-
-  for (const a of audios) {
-    try {
-      const oldVol = a.volume;
-      a.volume = 0.001;      // effectively silent
-      a.currentTime = 0;
-      await a.play();        // unlock on mobile
-      a.pause();
-      a.currentTime = 0;
-      a.volume = oldVol;     // restore volume
-    } catch (e) {
-      // If this fails once, user can tap Start again.
-      console.warn("Unlock failed for:", a.id, e);
-    }
-  }
-}
-
 
     async function startTimer() {
-  await unlockAudio(); // ✅ mobile fix
+      const { minS, maxS } = readMinMaxSeconds();
+      remaining = randomInt(minS, maxS);
+      timeEl.textContent = remaining;
 
-  const { minS, maxS } = readMinMaxSeconds();
-  remaining = randomInt(minS, maxS);
-  timeEl.textContent = remaining;
+      statusEl.textContent = "Detonation sequence armed.";
+      setUI(true);
 
-  statusEl.textContent = "Detonation sequence armed.";
-  setUI(true);
+      await startHeartbeat();
+      await startMusic();
 
-  await startHeartbeat();
-  await startMusic();
-
-  if (timerId) clearInterval(timerId);
-  timerId = setInterval(tick, 1000);
-}
-
+      if (timerId) clearInterval(timerId);
+      timerId = setInterval(tick, 1000);
     }
 
     async function stopTimer() {
@@ -479,25 +455,6 @@
     startBtn.addEventListener("click", startTimer);
     stopBtn.addEventListener("click", stopTimer);
     extendBtn.addEventListener("click", extendTimer);
-	
-	async function unlockAudio() {
-  const audios = [boomAudio, clickAudio, heartbeatAudio, musicAudio];
-
-  for (const a of audios) {
-    try {
-      const oldVol = a.volume;
-      a.volume = 0.001;
-      a.currentTime = 0;
-      await a.play();
-      a.pause();
-      a.currentTime = 0;
-      a.volume = oldVol;
-    } catch {
-      // If it fails, the user can tap Start again (or tap the page once more)
-    }
-  }
-}
-
   </script>
 </body>
 </html>
