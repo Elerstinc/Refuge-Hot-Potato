@@ -5,15 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Refuge Hot Potato Timer</title>
 
-  <!-- Inline favicon so no /favicon.ico 404 -->
+  <!-- Inline favicon (prevents favicon.ico 404) -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%92%A3%3C/text%3E%3C/svg%3E">
 
   <style>
     /* =========================
-       CUSTOM FONT
-       FIX: Font file is in REPO ROOT
-       File name: Brianne_s_hand.ttf
-       Font family name inside file: Brianne's hand
+       CUSTOM FONT (root)
        ========================= */
     @font-face {
       font-family: "Brianne's hand";
@@ -24,113 +21,112 @@
 
     :root { color-scheme: dark; }
 
-    body{
-      margin:0;
-      height:100vh;
-      display:grid;
-      place-items:center;
-      font-family:"Brianne's hand", system-ui, Arial, sans-serif;
-      color:#f0f0f0;
+    body {
+      margin: 0;
+      height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: "Brianne's hand", system-ui, Arial, sans-serif;
+      color: #f0f0f0;
 
       background:
         linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.75)),
-        url("background.jpg") center/cover no-repeat fixed,
+        url("background.jpg") center / cover no-repeat fixed,
         #0f0f0f;
     }
 
-    /* Top-left menu (force next song) */
-    .topLeftMenu{
+    /* Top-left song selector */
+    .topLeftMenu {
       position: fixed;
       top: 14px;
       left: 14px;
       display: flex;
-      align-items: center;
       gap: 10px;
+      align-items: center;
       padding: 10px 12px;
       border-radius: 14px;
-      background: rgba(20,20,20,0.70);
+      background: rgba(20,20,20,0.7);
       border: 1px solid rgba(255,255,255,0.12);
       backdrop-filter: blur(6px);
       box-shadow: 0 16px 28px rgba(0,0,0,0.35);
-      user-select: none;
       z-index: 10;
     }
 
-    .topLeftMenu label{
+    .topLeftMenu label {
       font-size: 14px;
       letter-spacing: 0.6px;
-      opacity: 0.95;
-      white-space: nowrap;
     }
 
-    .topLeftMenu select{
+    .topLeftMenu select {
       font-family: inherit;
       font-size: 14px;
       padding: 8px 10px;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.18);
       background: rgba(0,0,0,0.35);
       color: #f0f0f0;
-      outline: none;
+      border: 1px solid rgba(255,255,255,0.18);
       cursor: pointer;
     }
 
-    .card{
+    .card {
       background: rgba(20,20,20,0.75);
-      border-radius:16px;
-      padding:28px;
-      min-width:360px;
-      text-align:center;
-      border:1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 28px;
+      min-width: 360px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.12);
       backdrop-filter: blur(6px);
-      box-shadow:0 20px 40px rgba(0,0,0,0.5);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
     }
 
-    h1{
-      margin:0 0 10px;
-      letter-spacing:2px;
+    h1 {
+      margin: 0 0 10px;
+      letter-spacing: 2px;
       text-transform: uppercase;
     }
 
-    /* Timer hidden on purpose */
-    #time{ display:none; }
+    #time { display: none; }
 
-    #status, #nowPlaying{
-      font-size:15px;
-      margin-top:8px;
-      letter-spacing:0.6px;
+    #status, #nowPlaying {
+      font-size: 15px;
+      margin-top: 8px;
+      letter-spacing: 0.6px;
     }
 
-    .controls{ margin-top:14px; }
+    .controls {
+      margin-top: 14px;
+    }
 
-    button{
-      margin:8px;
-      padding:12px 18px;
-      font-size:16px;
-      border-radius:12px;
-      border:none;
-      cursor:pointer;
+    button {
+      margin: 8px;
+      padding: 12px 18px;
+      font-size: 16px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
       font-family: inherit;
     }
 
-    button:disabled{ opacity:0.5; cursor:not-allowed; }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-    .hint{
+    .hint {
       margin-top: 10px;
       font-size: 12px;
       opacity: 0.75;
-      letter-spacing: 0.4px;
       line-height: 1.2;
     }
   </style>
 </head>
 
 <body>
-  <!-- Top-left menu (force next song) -->
+  <!-- Song override menu -->
   <div class="topLeftMenu">
     <label for="nextSongSelect">Next song:</label>
     <select id="nextSongSelect">
-      <option value="random" selected>Random (normal)</option>
+      <option value="random" selected>Random</option>
       <option value="0">Pandemonium</option>
       <option value="1">Mole Patrol</option>
       <option value="2">Magni &amp; Modi</option>
@@ -154,27 +150,30 @@
     </div>
 
     <div class="hint">
-      Random music will not repeat until all 7 have been played.<br>
-      If a file is missing, check the browser Console for a 404.
+      Music will not repeat until all 7 songs have played.
     </div>
 
     <!-- Audio -->
+    <audio id="music" preload="auto"></audio>
+    <audio id="heartbeat" src="heartbeat.mp3" preload="auto" loop></audio>
     <audio id="boom" src="boom.mp3" preload="auto"></audio>
     <audio id="click" src="click.mp3" preload="auto"></audio>
-    <audio id="music" preload="auto"></audio>
   </div>
 
   <script>
     const statusEl = document.getElementById("status");
-    const timeEl = document.getElementById("time"); // hidden, internal only
+    const timeEl = document.getElementById("time");
     const nowPlayingEl = document.getElementById("nowPlaying");
     const startBtn = document.getElementById("startBtn");
     const stopBtn = document.getElementById("stopBtn");
     const nextSongSelect = document.getElementById("nextSongSelect");
 
+    const musicAudio = document.getElementById("music");
+    const heartbeatAudio = document.getElementById("heartbeat");
     const boomAudio = document.getElementById("boom");
     const clickAudio = document.getElementById("click");
-    const musicAudio = document.getElementById("music");
+
+    heartbeatAudio.volume = 0.2;
 
     const songs = [
       { file: "song1.mp3", name: "Pandemonium" },
@@ -186,21 +185,19 @@
       { file: "song7.mp3", name: "Moonview Highway" }
     ];
 
+    let bag = [];
     let timerId = null;
     let remaining = 0;
 
-    // Shuffle-bag: all songs once before any repeats
-    let bag = [];
-
     function refillBag() {
-      bag = Array.from({ length: songs.length }, (_, i) => i);
+      bag = [...Array(songs.length).keys()];
       for (let i = bag.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [bag[i], bag[j]] = [bag[j], bag[i]];
       }
     }
 
-    function getNextRandomFromBag() {
+    function getNextSongIndex() {
       if (bag.length === 0) refillBag();
       return bag.pop();
     }
@@ -214,115 +211,75 @@
       stopBtn.disabled = !running;
     }
 
-    function stopMusic() {
+    function stopAllAudio() {
       musicAudio.pause();
+      heartbeatAudio.pause();
       musicAudio.currentTime = 0;
-      musicAudio.removeAttribute("src");
-      musicAudio.load();
+      heartbeatAudio.currentTime = 0;
       nowPlayingEl.textContent = "Now playing: none";
     }
 
-    // Useful error messages if files are missing
-    musicAudio.addEventListener("error", () => {
-      statusEl.textContent = "Music failed to load (404?). Check that song1.mp3...song7.mp3 exist with exact names.";
-    });
-    boomAudio.addEventListener("error", () => {
-      statusEl.textContent = "boom.mp3 failed to load (404?). Check file name.";
-    });
-    clickAudio.addEventListener("error", () => {
-      statusEl.textContent = "click.mp3 failed to load (404?). Check file name.";
-    });
+    async function startHeartbeat() {
+      heartbeatAudio.currentTime = 0;
+      try { await heartbeatAudio.play(); } catch {}
+    }
 
     async function startMusic() {
-      const forced = nextSongSelect.value;
-
       let idx;
-      if (forced !== "random") {
-        idx = Number(forced);
-        // Forced song does NOT affect bag tracking
+      if (nextSongSelect.value !== "random") {
+        idx = Number(nextSongSelect.value);
         nextSongSelect.value = "random";
       } else {
-        idx = getNextRandomFromBag();
+        idx = getNextSongIndex();
       }
 
       const song = songs[idx];
-
-      // Force load + play
-      musicAudio.pause();
-      musicAudio.currentTime = 0;
       musicAudio.src = song.file;
       musicAudio.loop = true;
+      musicAudio.currentTime = 0;
       musicAudio.load();
 
       nowPlayingEl.textContent = `Now playing: ${song.name}`;
-
-      try {
-        await musicAudio.play();
-      } catch (e) {
-        statusEl.textContent = "Audio blocked by browser. Try clicking Start again (or interact once with the page).";
-        console.error("music play() failed:", e);
-      }
-    }
-
-    async function playBoom() {
-      boomAudio.currentTime = 0;
-      try { await boomAudio.play(); }
-      catch (e) { console.error("boom play() failed:", e); }
-    }
-
-    async function playClick() {
-      clickAudio.currentTime = 0;
-      try { await clickAudio.play(); }
-      catch (e) { console.error("click play() failed:", e); }
-    }
-
-    async function stopTimer() {
-      await playClick();
-
-      if (timerId) clearInterval(timerId);
-      timerId = null;
-      remaining = 0;
-
-      stopMusic();
-      setUI(false);
-      statusEl.textContent = "Sequence aborted.";
-      timeEl.textContent = "--";
+      try { await musicAudio.play(); } catch {}
     }
 
     async function startTimer() {
       remaining = randomSeconds(10, 40);
       timeEl.textContent = remaining;
-
       statusEl.textContent = "Detonation sequence armed.";
       setUI(true);
 
+      await startHeartbeat();
       await startMusic();
-
-      if (timerId) clearInterval(timerId);
 
       timerId = setInterval(async () => {
         remaining--;
-        timeEl.textContent = remaining;
-
         if (remaining <= 0) {
           clearInterval(timerId);
-          timerId = null;
-
-          stopMusic();
+          stopAllAudio();
           setUI(false);
-
           statusEl.textContent = "💥 Detonation complete.";
-          await playBoom();
+          boomAudio.currentTime = 0;
+          await boomAudio.play();
         }
       }, 1000);
     }
 
-    // Start randomized immediately
-    refillBag();
+    async function stopTimer() {
+      clickAudio.currentTime = 0;
+      await clickAudio.play();
 
+      clearInterval(timerId);
+      timerId = null;
+      stopAllAudio();
+      setUI(false);
+      statusEl.textContent = "Sequence aborted.";
+      timeEl.textContent = "--";
+    }
+
+    refillBag();
     startBtn.addEventListener("click", startTimer);
     stopBtn.addEventListener("click", stopTimer);
   </script>
 </body>
 </html>
-
