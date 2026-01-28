@@ -18,92 +18,123 @@
 
     :root { color-scheme: dark; }
 
-    body {
-      margin: 0;
-      height: 100vh;
-      display: grid;
-      place-items: center;
-
-      font-family: "Brianne's hand", system-ui, Arial, sans-serif;
-      color: #f0f0f0;
+    body{
+      margin:0;
+      height:100vh;
+      display:grid;
+      place-items:center;
+      font-family:"Brianne's hand", system-ui, Arial, sans-serif;
+      color:#f0f0f0;
 
       background:
         linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.75)),
-        url("background.jpg") center / cover no-repeat fixed,
+        url("background.jpg") center/cover no-repeat fixed,
         #0f0f0f;
     }
 
-    .card {
-      background: rgba(20, 20, 20, 0.75);
-      border-radius: 16px;
-      padding: 28px;
-      min-width: 360px;
-      text-align: center;
+    /* Top-left menu */
+    .topLeftMenu{
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(20,20,20,0.70);
       border: 1px solid rgba(255,255,255,0.12);
       backdrop-filter: blur(6px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      box-shadow: 0 16px 28px rgba(0,0,0,0.35);
+      user-select: none;
     }
 
-    h1 {
-      margin: 0 0 10px;
-      letter-spacing: 2px;
+    .topLeftMenu label{
+      font-size: 14px;
+      letter-spacing: 0.6px;
+      opacity: 0.95;
+      white-space: nowrap;
+    }
+
+    .topLeftMenu select{
+      font-family: inherit;
+      font-size: 14px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.35);
+      color: #f0f0f0;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .card{
+      background: rgba(20,20,20,0.75);
+      border-radius:16px;
+      padding:28px;
+      min-width:360px;
+      text-align:center;
+      border:1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(6px);
+      box-shadow:0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    h1{
+      margin:0 0 10px;
+      letter-spacing:2px;
       text-transform: uppercase;
     }
 
-    #time {
-      display: none; /* intentionally hidden */
+    /* Timer hidden on purpose */
+    #time{ display:none; }
+
+    #status, #nowPlaying{
+      font-size:15px;
+      margin-top:8px;
+      letter-spacing:0.6px;
     }
 
-    #status, #nowPlaying {
-      font-size: 15px;
-      margin-top: 8px;
-      letter-spacing: 0.6px;
-    }
+    .controls{ margin-top:14px; }
 
-    .controls {
-      margin-top: 14px;
-    }
-
-    button {
-      margin: 8px;
-      padding: 12px 18px;
-      font-size: 16px;
-      border-radius: 12px;
-      border: none;
-      cursor: pointer;
+    button{
+      margin:8px;
+      padding:12px 18px;
+      font-size:16px;
+      border-radius:12px;
+      border:none;
+      cursor:pointer;
       font-family: inherit;
     }
 
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    button:disabled{ opacity:0.5; cursor:not-allowed; }
 
-    .row {
-      margin-top: 14px;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    input[type="file"] {
-      font-family: inherit;
-      font-size: 14px;
-      max-width: 240px;
-    }
-
-    .hint {
+    .hint{
+      margin-top: 10px;
       font-size: 12px;
       opacity: 0.75;
-      margin-top: 8px;
+      letter-spacing: 0.4px;
     }
   </style>
 </head>
 
 <body>
+  <!-- Top-left menu (force next song) -->
+  <div class="topLeftMenu">
+    <label for="nextSongSelect">Next song:</label>
+    <select id="nextSongSelect">
+      <option value="random" selected>Random (normal)</option>
+      <option value="0">Pandemonium</option>
+      <option value="1">Mole Patrol</option>
+      <option value="2">Magni &amp; Modi</option>
+      <option value="3">Nemesis Pursuit</option>
+      <option value="4">Mushroom Gorge</option>
+      <option value="5">Toad&#39;s Factory</option>
+      <option value="6">Moonview Highway</option>
+    </select>
+  </div>
+
   <div class="card">
-    <h1>Random Timer</h1>
+    <h1>Hot Potato</h1>
 
     <div id="status">Awaiting activation.</div>
     <div id="time">--</div>
@@ -114,138 +145,48 @@
       <button id="stopBtn" disabled>Abort</button>
     </div>
 
-    <div class="row">
-      <label>
-        Background:
-        <input id="bgUpload" type="file" accept="image/*" />
-      </label>
-      <button id="clearBgBtn">Clear Background</button>
-    </div>
-
     <div class="hint">
-      If no image is uploaded, <b>background.jpg</b> will be used if present.
+      Random music will not repeat until all 7 have been played.
     </div>
 
     <!-- Audio -->
     <audio id="boom" src="boom.mp3" preload="auto"></audio>
+    <audio id="click" src="click.mp3" preload="auto"></audio>
     <audio id="music" preload="auto"></audio>
   </div>
 
   <script>
     const statusEl = document.getElementById("status");
-    const timeEl = document.getElementById("time");
+    const timeEl = document.getElementById("time"); // hidden, internal only
     const nowPlayingEl = document.getElementById("nowPlaying");
     const startBtn = document.getElementById("startBtn");
     const stopBtn = document.getElementById("stopBtn");
-
-    const bgUpload = document.getElementById("bgUpload");
-    const clearBgBtn = document.getElementById("clearBgBtn");
+    const nextSongSelect = document.getElementById("nextSongSelect");
 
     const boomAudio = document.getElementById("boom");
+    const clickAudio = document.getElementById("click");
     const musicAudio = document.getElementById("music");
 
+    // 7 songs + names
     const songs = [
-      { file: "song1.mp3", name: "Song 1" },
-      { file: "song2.mp3", name: "Song 2" },
-      { file: "song3.mp3", name: "Song 3" },
-      { file: "song4.mp3", name: "Song 4" },
-      { file: "song5.mp3", name: "Song 5" },
-      { file: "song6.mp3", name: "Song 6" },
-      { file: "song7.mp3", name: "Song 7" }
+      { file: "song1.mp3", name: "Pandemonium" },
+      { file: "song2.mp3", name: "Mole Patrol" },
+      { file: "song3.mp3", name: "Magni & Modi" },
+      { file: "song4.mp3", name: "Nemesis Pursuit" },
+      { file: "song5.mp3", name: "Mushroom Gorge" },
+      { file: "song6.mp3", name: "Toad's Factory" },
+      { file: "song7.mp3", name: "Moonview Highway" }
     ];
 
     let timerId = null;
     let remaining = 0;
-    let lastSongIndex = -1;
 
-    function randomSeconds(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+    // "Shuffle bag" so every song plays once before repeats
+    let bag = [];
 
-    function pickSongNoRepeat() {
-      let idx;
-      do {
-        idx = Math.floor(Math.random() * songs.length);
-      } while (idx === lastSongIndex);
-      lastSongIndex = idx;
-      return songs[idx];
-    }
+    function refillBag() {
+      bag = Array.from({ length: songs.length }, (_, i) => i);
 
-    function setUI(running) {
-      startBtn.disabled = running;
-      stopBtn.disabled = !running;
-    }
-
-    function stopMusic() {
-      musicAudio.pause();
-      musicAudio.currentTime = 0;
-      musicAudio.removeAttribute("src");
-      musicAudio.load();
-      nowPlayingEl.textContent = "Now playing: none";
-    }
-
-    async function startMusic() {
-      const song = pickSongNoRepeat();
-      musicAudio.src = song.file;
-      musicAudio.loop = true;
-      nowPlayingEl.textContent = `Now playing: ${song.name}`;
-      try { await musicAudio.play(); } catch {}
-    }
-
-    async function playBoom() {
-      boomAudio.currentTime = 0;
-      try { await boomAudio.play(); } catch {}
-    }
-
-    function stopTimer() {
-      if (timerId) clearInterval(timerId);
-      timerId = null;
-      remaining = 0;
-      stopMusic();
-      setUI(false);
-      statusEl.textContent = "Sequence aborted.";
-    }
-
-    async function startTimer() {
-      remaining = randomSeconds(10, 40);
-      timeEl.textContent = remaining;
-      statusEl.textContent = "Detonation sequence armed.";
-      setUI(true);
-      await startMusic();
-
-      timerId = setInterval(async () => {
-        remaining--;
-        if (remaining <= 0) {
-          clearInterval(timerId);
-          timerId = null;
-          stopMusic();
-          setUI(false);
-          statusEl.textContent = "💥 Detonation complete.";
-          await playBoom();
-        }
-      }, 1000);
-    }
-
-    bgUpload.addEventListener("change", e => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const url = URL.createObjectURL(file);
-      document.body.style.background =
-        `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.75)),
-         url("${url}") center/cover no-repeat fixed,
-         #0f0f0f`;
-    });
-
-    clearBgBtn.addEventListener("click", () => {
-      bgUpload.value = "";
-      document.body.style.background =
-        `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.75)),
-         url("background.jpg") center/cover no-repeat fixed,
-         #0f0f0f`;
-    });
-
-    startBtn.addEventListener("click", startTimer);
-    stopBtn.addEventListener("click", stopTimer);
-  </script>
-</body>
-</html>
+      // Fisher-Yates shuffle
+      for (let i = bag.length - 1; i > 0; i--) {
+        const
