@@ -9,9 +9,6 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%92%A3%3C/text%3E%3C/svg%3E">
 
   <style>
-    /* =========================
-       CUSTOM FONT (repo root)
-       ========================= */
     @font-face{
       font-family:"Brianne's hand";
       src:url("briannes-hand.ttf") format("truetype");
@@ -95,7 +92,9 @@
     }
 
     /* Pulse red while active */
-    .activePulse{ animation:pulseRed 1.15s infinite; }
+    .activePulse{
+      animation:pulseRed 1.15s infinite;
+    }
     @keyframes pulseRed{
       0%   { color:#f0f0f0; text-shadow:none; }
       50%  { color:#ff4b4b; text-shadow:0 0 12px rgba(255,75,75,0.35); }
@@ -156,7 +155,9 @@
       outline:none;
     }
 
-    input[type="range"]{ width:180px; }
+    input[type="range"]{
+      width:180px;
+    }
 
     .hint{
       margin-top:10px;
@@ -251,7 +252,7 @@
     const boomAudio = document.getElementById("boom");
     const clickAudio = document.getElementById("click");
 
-    // Louder default heartbeat
+    // Louder in general (default)
     const DEFAULT_HB_VOL = 0.60; // 60%
     heartbeatAudio.volume = DEFAULT_HB_VOL;
     hbVol.value = Math.round(DEFAULT_HB_VOL * 100);
@@ -297,6 +298,7 @@
       stopBtn.disabled = !isRunning;
       extendBtn.disabled = !isRunning;
 
+      // Pulse red while active
       statusEl.classList.toggle("activePulse", isRunning);
       nowPlayingEl.classList.toggle("activePulse", isRunning);
     }
@@ -309,9 +311,11 @@
       const rawMin = minSecondsInput.value.trim();
       const rawMax = maxSecondsInput.value.trim();
 
+      // Defaults if blank
       let minS = 10;
       let maxS = 40;
 
+      // Only use user inputs if provided and valid integers
       if (rawMin !== "") {
         const parsed = Number(rawMin);
         if (Number.isFinite(parsed)) minS = Math.floor(parsed);
@@ -321,11 +325,14 @@
         if (Number.isFinite(parsed)) maxS = Math.floor(parsed);
       }
 
+      // Ensure sane bounds, seconds only
       minS = Math.max(1, minS);
       maxS = Math.max(1, maxS);
 
+      // If user swapped them, fix it
       if (minS > maxS) [minS, maxS] = [maxS, minS];
 
+      // Optional: cap extremes so nobody melts their browser
       minS = clampInt(minS, 1, 9999);
       maxS = clampInt(maxS, 1, 9999);
 
@@ -349,26 +356,6 @@
       nowPlayingEl.textContent = "Now playing: none";
     }
 
-    // ✅ Mobile audio unlock: primes audio so boom works later on phones
-    async function unlockAudio() {
-      const audios = [boomAudio, clickAudio, heartbeatAudio, musicAudio];
-
-      for (const a of audios) {
-        try {
-          const oldVol = a.volume;
-          a.volume = 0.001;      // basically silent
-          a.currentTime = 0;
-          await a.play();        // unlock
-          a.pause();
-          a.currentTime = 0;
-          a.volume = oldVol;     // restore
-        } catch (e) {
-          // If it fails, user can tap Start again or tap page once more.
-          console.warn("Unlock failed for:", a.id, e);
-        }
-      }
-    }
-
     async function startHeartbeat() {
       heartbeatAudio.loop = true;
       heartbeatAudio.currentTime = 0;
@@ -376,6 +363,7 @@
     }
 
     async function startMusic() {
+      // Songs loop if needed
       musicAudio.loop = true;
 
       let idx;
@@ -422,9 +410,6 @@
     }
 
     async function startTimer() {
-      // ✅ Unlock audio right on the user tap (mobile fix)
-      await unlockAudio();
-
       const { minS, maxS } = readMinMaxSeconds();
       remaining = randomInt(minS, maxS);
       timeEl.textContent = remaining;
@@ -460,10 +445,11 @@
       remaining += add;
       timeEl.textContent = remaining;
 
-      // Don't reveal the number
+      // Do NOT reveal how many seconds were added
       statusEl.textContent = "Timer extended.";
     }
 
+    // Init shuffle bag
     refillBag();
 
     startBtn.addEventListener("click", startTimer);
