@@ -9,114 +9,162 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%92%A3%3C/text%3E%3C/svg%3E">
 
   <style>
-    /* =========================
-       CUSTOM FONT (root)
-       ========================= */
-    @font-face {
-      font-family: "Brianne's hand";
-      src: url("briannes-hand.ttf") format("truetype");
-      font-weight: normal;
-      font-style: normal;
+    @font-face{
+      font-family:"Brianne's hand";
+      src:url("briannes-hand.ttf") format("truetype");
+      font-weight:normal;
+      font-style:normal;
     }
 
-    :root { color-scheme: dark; }
+    :root{ color-scheme: dark; }
 
-    body {
-      margin: 0;
-      height: 100vh;
-      display: grid;
-      place-items: center;
-      font-family: "Brianne's hand", system-ui, Arial, sans-serif;
-      color: #f0f0f0;
-
+    body{
+      margin:0;
+      height:100vh;
+      display:grid;
+      place-items:center;
+      font-family:"Brianne's hand", system-ui, Arial, sans-serif;
+      color:#f0f0f0;
       background:
         linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.75)),
-        url("background.jpg") center / cover no-repeat fixed,
+        url("background.jpg") center/cover no-repeat fixed,
         #0f0f0f;
     }
 
-    /* Top-left song selector */
-    .topLeftMenu {
-      position: fixed;
-      top: 14px;
-      left: 14px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: rgba(20,20,20,0.7);
-      border: 1px solid rgba(255,255,255,0.12);
-      backdrop-filter: blur(6px);
-      box-shadow: 0 16px 28px rgba(0,0,0,0.35);
-      z-index: 10;
+    /* Top-left song override menu */
+    .topLeftMenu{
+      position:fixed;
+      top:14px;
+      left:14px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(20,20,20,0.7);
+      border:1px solid rgba(255,255,255,0.12);
+      backdrop-filter:blur(6px);
+      box-shadow:0 16px 28px rgba(0,0,0,0.35);
+      z-index:10;
+      user-select:none;
+    }
+    .topLeftMenu label{
+      font-size:14px;
+      letter-spacing:0.6px;
+      white-space:nowrap;
+    }
+    .topLeftMenu select{
+      font-family:inherit;
+      font-size:14px;
+      padding:8px 10px;
+      border-radius:12px;
+      background:rgba(0,0,0,0.35);
+      color:#f0f0f0;
+      border:1px solid rgba(255,255,255,0.18);
+      cursor:pointer;
+      outline:none;
     }
 
-    .topLeftMenu label {
-      font-size: 14px;
-      letter-spacing: 0.6px;
+    .card{
+      background:rgba(20,20,20,0.75);
+      border-radius:16px;
+      padding:28px;
+      min-width:380px;
+      text-align:center;
+      border:1px solid rgba(255,255,255,0.12);
+      backdrop-filter:blur(6px);
+      box-shadow:0 20px 40px rgba(0,0,0,0.5);
     }
 
-    .topLeftMenu select {
-      font-family: inherit;
-      font-size: 14px;
-      padding: 8px 10px;
-      border-radius: 12px;
-      background: rgba(0,0,0,0.35);
-      color: #f0f0f0;
-      border: 1px solid rgba(255,255,255,0.18);
-      cursor: pointer;
+    h1{
+      margin:0 0 10px;
+      letter-spacing:2px;
+      text-transform:uppercase;
     }
 
-    .card {
-      background: rgba(20,20,20,0.75);
-      border-radius: 16px;
-      padding: 28px;
-      min-width: 360px;
-      text-align: center;
-      border: 1px solid rgba(255,255,255,0.12);
-      backdrop-filter: blur(6px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    /* Hidden timer value (internal only) */
+    #time{ display:none; }
+
+    #status, #nowPlaying{
+      font-size:15px;
+      margin-top:8px;
+      letter-spacing:0.6px;
     }
 
-    h1 {
-      margin: 0 0 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+    /* Pulse red while active */
+    .activePulse{
+      animation:pulseRed 1.15s infinite;
+    }
+    @keyframes pulseRed{
+      0%   { color:#f0f0f0; text-shadow:none; }
+      50%  { color:#ff4b4b; text-shadow:0 0 12px rgba(255,75,75,0.35); }
+      100% { color:#f0f0f0; text-shadow:none; }
     }
 
-    #time { display: none; }
+    .controls{ margin-top:14px; }
 
-    #status, #nowPlaying {
-      font-size: 15px;
-      margin-top: 8px;
-      letter-spacing: 0.6px;
+    button{
+      margin:8px;
+      padding:12px 18px;
+      font-size:16px;
+      border-radius:12px;
+      border:none;
+      cursor:pointer;
+      font-family:inherit;
+    }
+    button:disabled{ opacity:0.5; cursor:not-allowed; }
+
+    .panel{
+      margin-top:14px;
+      display:grid;
+      gap:10px;
+      text-align:left;
     }
 
-    .controls {
-      margin-top: 14px;
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:space-between;
     }
 
-    button {
-      margin: 8px;
-      padding: 12px 18px;
-      font-size: 16px;
-      border-radius: 12px;
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
+    .field{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
     }
 
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    .field label{
+      font-size:14px;
+      letter-spacing:0.4px;
+      opacity:0.95;
+      white-space:nowrap;
     }
 
-    .hint {
-      margin-top: 10px;
-      font-size: 12px;
-      opacity: 0.75;
-      line-height: 1.2;
+    input[type="number"]{
+      width:92px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.18);
+      background:rgba(0,0,0,0.35);
+      color:#f0f0f0;
+      font-family:inherit;
+      font-size:14px;
+      outline:none;
+    }
+
+    input[type="range"]{
+      width:180px;
+    }
+
+    .hint{
+      margin-top:10px;
+      font-size:12px;
+      opacity:0.75;
+      line-height:1.2;
+      text-align:center;
     }
   </style>
 </head>
@@ -145,12 +193,34 @@
     <div id="nowPlaying">Now playing: none</div>
 
     <div class="controls">
-      <button id="startBtn">Start (10–40s)</button>
+      <button id="startBtn">Start</button>
       <button id="stopBtn" disabled>Abort</button>
+      <button id="extendBtn" disabled>Extend the timer</button>
+    </div>
+
+    <div class="panel">
+      <div class="row">
+        <div class="field">
+          <label for="minSeconds">Min seconds:</label>
+          <input id="minSeconds" type="number" min="1" step="1" placeholder="10" inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label for="maxSeconds">Max seconds:</label>
+          <input id="maxSeconds" type="number" min="1" step="1" placeholder="40" inputmode="numeric" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="hbVol">Heartbeat volume:</label>
+          <input id="hbVol" type="range" min="0" max="100" step="1" />
+          <span id="hbVolLabel" style="font-size:14px; opacity:0.9;">60%</span>
+        </div>
+      </div>
     </div>
 
     <div class="hint">
-      Music will not repeat until all 7 songs have played.
+      Leave Min/Max blank to use default (10–40). Songs + heartbeat loop automatically.
     </div>
 
     <!-- Audio -->
@@ -162,10 +232,19 @@
 
   <script>
     const statusEl = document.getElementById("status");
-    const timeEl = document.getElementById("time");
+    const timeEl = document.getElementById("time"); // hidden internal value
     const nowPlayingEl = document.getElementById("nowPlaying");
+
     const startBtn = document.getElementById("startBtn");
     const stopBtn = document.getElementById("stopBtn");
+    const extendBtn = document.getElementById("extendBtn");
+
+    const minSecondsInput = document.getElementById("minSeconds");
+    const maxSecondsInput = document.getElementById("maxSeconds");
+
+    const hbVol = document.getElementById("hbVol");
+    const hbVolLabel = document.getElementById("hbVolLabel");
+
     const nextSongSelect = document.getElementById("nextSongSelect");
 
     const musicAudio = document.getElementById("music");
@@ -173,7 +252,17 @@
     const boomAudio = document.getElementById("boom");
     const clickAudio = document.getElementById("click");
 
-    heartbeatAudio.volume = 0.2;
+    // Louder in general (default)
+    const DEFAULT_HB_VOL = 0.60; // 60%
+    heartbeatAudio.volume = DEFAULT_HB_VOL;
+    hbVol.value = Math.round(DEFAULT_HB_VOL * 100);
+    hbVolLabel.textContent = `${hbVol.value}%`;
+
+    hbVol.addEventListener("input", () => {
+      const v = Math.max(0, Math.min(100, Number(hbVol.value)));
+      heartbeatAudio.volume = v / 100;
+      hbVolLabel.textContent = `${v}%`;
+    });
 
     const songs = [
       { file: "song1.mp3", name: "Pandemonium" },
@@ -185,10 +274,8 @@
       { file: "song7.mp3", name: "Moonview Highway" }
     ];
 
+    // Shuffle-bag so every song plays once before repeats
     let bag = [];
-    let timerId = null;
-    let remaining = 0;
-
     function refillBag() {
       bag = [...Array(songs.length).keys()];
       for (let i = bag.length - 1; i > 0; i--) {
@@ -196,46 +283,99 @@
         [bag[i], bag[j]] = [bag[j], bag[i]];
       }
     }
-
     function getNextSongIndex() {
       if (bag.length === 0) refillBag();
       return bag.pop();
     }
 
-    function randomSeconds(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
+    let timerId = null;
+    let remaining = 0;
+    let running = false;
+
+    function setUI(isRunning) {
+      running = isRunning;
+      startBtn.disabled = isRunning;
+      stopBtn.disabled = !isRunning;
+      extendBtn.disabled = !isRunning;
+
+      // Pulse red while active
+      statusEl.classList.toggle("activePulse", isRunning);
+      nowPlayingEl.classList.toggle("activePulse", isRunning);
     }
 
-    function setUI(running) {
-      startBtn.disabled = running;
-      stopBtn.disabled = !running;
+    function clampInt(n, min, max) {
+      return Math.min(max, Math.max(min, n));
+    }
+
+    function readMinMaxSeconds() {
+      const rawMin = minSecondsInput.value.trim();
+      const rawMax = maxSecondsInput.value.trim();
+
+      // Defaults if blank
+      let minS = 10;
+      let maxS = 40;
+
+      // Only use user inputs if provided and valid integers
+      if (rawMin !== "") {
+        const parsed = Number(rawMin);
+        if (Number.isFinite(parsed)) minS = Math.floor(parsed);
+      }
+      if (rawMax !== "") {
+        const parsed = Number(rawMax);
+        if (Number.isFinite(parsed)) maxS = Math.floor(parsed);
+      }
+
+      // Ensure sane bounds, seconds only
+      minS = Math.max(1, minS);
+      maxS = Math.max(1, maxS);
+
+      // If user swapped them, fix it
+      if (minS > maxS) [minS, maxS] = [maxS, minS];
+
+      // Optional: cap extremes so nobody melts their browser
+      minS = clampInt(minS, 1, 9999);
+      maxS = clampInt(maxS, 1, 9999);
+
+      return { minS, maxS };
+    }
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     function stopAllAudio() {
       musicAudio.pause();
       heartbeatAudio.pause();
+
       musicAudio.currentTime = 0;
       heartbeatAudio.currentTime = 0;
+
+      musicAudio.removeAttribute("src");
+      musicAudio.load();
+
       nowPlayingEl.textContent = "Now playing: none";
     }
 
     async function startHeartbeat() {
+      heartbeatAudio.loop = true;
       heartbeatAudio.currentTime = 0;
       try { await heartbeatAudio.play(); } catch {}
     }
 
     async function startMusic() {
+      // Songs loop if needed
+      musicAudio.loop = true;
+
       let idx;
       if (nextSongSelect.value !== "random") {
         idx = Number(nextSongSelect.value);
-        nextSongSelect.value = "random";
+        nextSongSelect.value = "random"; // does NOT affect bag tracking
       } else {
         idx = getNextSongIndex();
       }
 
       const song = songs[idx];
       musicAudio.src = song.file;
-      musicAudio.loop = true;
       musicAudio.currentTime = 0;
       musicAudio.load();
 
@@ -243,43 +383,78 @@
       try { await musicAudio.play(); } catch {}
     }
 
-    async function startTimer() {
-      remaining = randomSeconds(10, 40);
+    async function playBoom() {
+      boomAudio.currentTime = 0;
+      try { await boomAudio.play(); } catch {}
+    }
+
+    async function playClick() {
+      clickAudio.currentTime = 0;
+      try { await clickAudio.play(); } catch {}
+    }
+
+    function tick() {
+      remaining -= 1; // seconds only
       timeEl.textContent = remaining;
+
+      if (remaining <= 0) {
+        clearInterval(timerId);
+        timerId = null;
+
+        stopAllAudio();
+        setUI(false);
+
+        statusEl.textContent = "💥 Detonation complete.";
+        playBoom();
+      }
+    }
+
+    async function startTimer() {
+      const { minS, maxS } = readMinMaxSeconds();
+      remaining = randomInt(minS, maxS);
+      timeEl.textContent = remaining;
+
       statusEl.textContent = "Detonation sequence armed.";
       setUI(true);
 
       await startHeartbeat();
       await startMusic();
 
-      timerId = setInterval(async () => {
-        remaining--;
-        if (remaining <= 0) {
-          clearInterval(timerId);
-          stopAllAudio();
-          setUI(false);
-          statusEl.textContent = "💥 Detonation complete.";
-          boomAudio.currentTime = 0;
-          await boomAudio.play();
-        }
-      }, 1000);
+      if (timerId) clearInterval(timerId);
+      timerId = setInterval(tick, 1000);
     }
 
     async function stopTimer() {
-      clickAudio.currentTime = 0;
-      await clickAudio.play();
+      await playClick();
 
-      clearInterval(timerId);
+      if (timerId) clearInterval(timerId);
       timerId = null;
+      remaining = 0;
+
       stopAllAudio();
       setUI(false);
+
       statusEl.textContent = "Sequence aborted.";
       timeEl.textContent = "--";
     }
 
+    function extendTimer() {
+      if (!running) return;
+
+      const add = randomInt(3, 10);
+      remaining += add;
+      timeEl.textContent = remaining;
+
+      // Do NOT reveal how many seconds were added
+      statusEl.textContent = "Timer extended.";
+    }
+
+    // Init shuffle bag
     refillBag();
+
     startBtn.addEventListener("click", startTimer);
     stopBtn.addEventListener("click", stopTimer);
+    extendBtn.addEventListener("click", extendTimer);
   </script>
 </body>
 </html>
