@@ -31,7 +31,6 @@
         #0f0f0f;
     }
 
-    /* Top-left song override menu */
     .topLeftMenu{
       position:fixed;
       top:14px;
@@ -82,7 +81,7 @@
       text-transform:uppercase;
     }
 
-    /* Hidden timer value (internal only) */
+    /* Hidden internal timer */
     #time{ display:none; }
 
     #status, #nowPlaying{
@@ -91,10 +90,7 @@
       letter-spacing:0.6px;
     }
 
-    /* Pulse red while active */
-    .activePulse{
-      animation:pulseRed 1.15s infinite;
-    }
+    .activePulse{ animation:pulseRed 1.15s infinite; }
     @keyframes pulseRed{
       0%   { color:#f0f0f0; text-shadow:none; }
       50%  { color:#ff4b4b; text-shadow:0 0 12px rgba(255,75,75,0.35); }
@@ -155,9 +151,7 @@
       outline:none;
     }
 
-    input[type="range"]{
-      width:180px;
-    }
+    input[type="range"]{ width:180px; }
 
     .hint{
       margin-top:10px;
@@ -170,7 +164,6 @@
 </head>
 
 <body>
-  <!-- Song override menu -->
   <div class="topLeftMenu">
     <label for="nextSongSelect">Next song:</label>
     <select id="nextSongSelect">
@@ -220,7 +213,7 @@
     </div>
 
     <div class="hint">
-      Leave Min/Max blank to use default (10–40). Songs + heartbeat loop automatically.
+      Leave Min/Max blank to use default (10–40). Songs loop automatically.
     </div>
 
     <!-- Audio -->
@@ -232,7 +225,7 @@
 
   <script>
     const statusEl = document.getElementById("status");
-    const timeEl = document.getElementById("time"); // hidden internal value
+    const timeEl = document.getElementById("time");
     const nowPlayingEl = document.getElementById("nowPlaying");
 
     const startBtn = document.getElementById("startBtn");
@@ -252,10 +245,10 @@
     const boomAudio = document.getElementById("boom");
     const clickAudio = document.getElementById("click");
 
-    // Louder in general (default)
-    const DEFAULT_HB_VOL = 0.60; // 60%
+    // Louder default heartbeat
+    const DEFAULT_HB_VOL = 0.70; // louder than before
     heartbeatAudio.volume = DEFAULT_HB_VOL;
-    hbVol.value = Math.round(DEFAULT_HB_VOL * 100);
+    hbVol.value = String(Math.round(DEFAULT_HB_VOL * 100));
     hbVolLabel.textContent = `${hbVol.value}%`;
 
     hbVol.addEventListener("input", () => {
@@ -274,7 +267,7 @@
       { file: "song7.mp3", name: "Moonview Highway" }
     ];
 
-    // Shuffle-bag so every song plays once before repeats
+    // Shuffle-bag: no repeats until all played
     let bag = [];
     function refillBag() {
       bag = [...Array(songs.length).keys()];
@@ -298,7 +291,6 @@
       stopBtn.disabled = !isRunning;
       extendBtn.disabled = !isRunning;
 
-      // Pulse red while active
       statusEl.classList.toggle("activePulse", isRunning);
       nowPlayingEl.classList.toggle("activePulse", isRunning);
     }
@@ -311,11 +303,9 @@
       const rawMin = minSecondsInput.value.trim();
       const rawMax = maxSecondsInput.value.trim();
 
-      // Defaults if blank
       let minS = 10;
       let maxS = 40;
 
-      // Only use user inputs if provided and valid integers
       if (rawMin !== "") {
         const parsed = Number(rawMin);
         if (Number.isFinite(parsed)) minS = Math.floor(parsed);
@@ -325,14 +315,11 @@
         if (Number.isFinite(parsed)) maxS = Math.floor(parsed);
       }
 
-      // Ensure sane bounds, seconds only
       minS = Math.max(1, minS);
       maxS = Math.max(1, maxS);
 
-      // If user swapped them, fix it
       if (minS > maxS) [minS, maxS] = [maxS, minS];
 
-      // Optional: cap extremes so nobody melts their browser
       minS = clampInt(minS, 1, 9999);
       maxS = clampInt(maxS, 1, 9999);
 
@@ -356,6 +343,24 @@
       nowPlayingEl.textContent = "Now playing: none";
     }
 
+    // Mobile audio unlock: primes audio so boom works later on phones
+    async function unlockAudio() {
+      const audios = [boomAudio, clickAudio, heartbeatAudio, musicAudio];
+      for (const a of audios) {
+        try {
+          const oldVol = a.volume;
+          a.volume = 0.001;
+          a.currentTime = 0;
+          await a.play();
+          a.pause();
+          a.currentTime = 0;
+          a.volume = oldVol;
+        } catch (e) {
+          console.warn("Unlock failed for:", a.id, e);
+        }
+      }
+    }
+
     async function startHeartbeat() {
       heartbeatAudio.loop = true;
       heartbeatAudio.currentTime = 0;
@@ -363,13 +368,12 @@
     }
 
     async function startMusic() {
-      // Songs loop if needed
       musicAudio.loop = true;
 
       let idx;
       if (nextSongSelect.value !== "random") {
         idx = Number(nextSongSelect.value);
-        nextSongSelect.value = "random"; // does NOT affect bag tracking
+        nextSongSelect.value = "random"; // does not affect bag tracking
       } else {
         idx = getNextSongIndex();
       }
@@ -410,6 +414,8 @@
     }
 
     async function startTimer() {
+      await unlockAudio(); // <-- mobile fix
+
       const { minS, maxS } = readMinMaxSeconds();
       remaining = randomInt(minS, maxS);
       timeEl.textContent = remaining;
@@ -441,15 +447,12 @@
     function extendTimer() {
       if (!running) return;
 
-      const add = randomInt(3, 10);
-      remaining += add;
+      remaining += randomInt(3, 10); // don't reveal how much
       timeEl.textContent = remaining;
-
-      // Do NOT reveal how many seconds were added
       statusEl.textContent = "Timer extended.";
     }
 
-    // Init shuffle bag
+    // init
     refillBag();
 
     startBtn.addEventListener("click", startTimer);
