@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Refuge Hot Potato Timer</title>
+
+  <!-- Inline favicon (prevents favicon.ico 404) -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%92%A3%3C/text%3E%3C/svg%3E">
 
   <style>
@@ -29,6 +31,7 @@
         #0f0f0f;
     }
 
+    /* Top-left song override menu */
     .topLeftMenu{
       position:fixed;
       top:14px;
@@ -45,7 +48,11 @@
       z-index:10;
       user-select:none;
     }
-    .topLeftMenu label{ font-size:14px; letter-spacing:0.6px; white-space:nowrap; }
+    .topLeftMenu label{
+      font-size:14px;
+      letter-spacing:0.6px;
+      white-space:nowrap;
+    }
     .topLeftMenu select{
       font-family:inherit;
       font-size:14px;
@@ -70,8 +77,13 @@
       position:relative;
     }
 
-    h1{ margin:0 0 10px; letter-spacing:2px; text-transform:uppercase; }
+    h1{
+      margin:0 0 10px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+    }
 
+    /* Hidden internal timer */
     #time{ display:none; }
 
     #status, #nowPlaying{
@@ -80,6 +92,7 @@
       letter-spacing:0.6px;
     }
 
+    /* Pulse red while active */
     .activePulse{ animation:pulseRed 1.15s infinite; }
     @keyframes pulseRed{
       0%   { color:#f0f0f0; text-shadow:none; }
@@ -88,6 +101,7 @@
     }
 
     .controls{ margin-top:14px; }
+
     button{
       margin:8px;
       padding:12px 18px;
@@ -150,7 +164,7 @@
       text-align:center;
     }
 
-    /* Sound gate overlay (only shows if browser blocks audio) */
+    /* Sound gate overlay (shows if browser blocks audio) */
     .soundGate{
       position:absolute;
       inset:0;
@@ -180,6 +194,7 @@
 </head>
 
 <body>
+  <!-- Song override menu -->
   <div class="topLeftMenu">
     <label for="nextSongSelect">Next song:</label>
     <select id="nextSongSelect">
@@ -203,6 +218,7 @@
     </div>
 
     <h1>Hot Potato</h1>
+
     <div id="status">Awaiting activation.</div>
     <div id="time">--</div>
     <div id="nowPlaying">Now playing: none</div>
@@ -243,6 +259,7 @@
     <audio id="heartbeat" src="heartbeat.mp3" preload="auto" loop></audio>
     <audio id="boom" src="boom.mp3" preload="auto"></audio>
     <audio id="click" src="click.mp3" preload="auto"></audio>
+    <audio id="extendSfx" src="extend.mp3" preload="auto"></audio>
   </div>
 
   <script>
@@ -269,6 +286,7 @@
     const heartbeatAudio = document.getElementById("heartbeat");
     const boomAudio = document.getElementById("boom");
     const clickAudio = document.getElementById("click");
+    const extendAudio = document.getElementById("extendSfx");
 
     // Louder default heartbeat
     const DEFAULT_HB_VOL = 0.70;
@@ -292,7 +310,7 @@
       { file: "song7.mp3", name: "Moonview Highway" }
     ];
 
-    // Shuffle-bag
+    // Shuffle-bag: no repeats until all played
     let bag = [];
     function refillBag() {
       bag = [...Array(songs.length).keys()];
@@ -358,31 +376,14 @@
     function stopAllAudio() {
       musicAudio.pause();
       heartbeatAudio.pause();
+
       musicAudio.currentTime = 0;
       heartbeatAudio.currentTime = 0;
+
       musicAudio.removeAttribute("src");
       musicAudio.load();
-      nowPlayingEl.textContent = "Now playing: none";
-    }
 
-    // Unlock ONLY audios with real sources (music gets set later)
-    async function unlockAudioBase() {
-      const audios = [boomAudio, clickAudio, heartbeatAudio];
-      for (const a of audios) {
-        try {
-          const oldVol = a.volume;
-          a.volume = 0.001;
-          a.currentTime = 0;
-          await a.play();
-          a.pause();
-          a.currentTime = 0;
-          a.volume = oldVol;
-        } catch (e) {
-          // We'll show sound gate if anything blocks
-          return false;
-        }
-      }
-      return true;
+      nowPlayingEl.textContent = "Now playing: none";
     }
 
     async function tryPlay(audio) {
@@ -398,6 +399,25 @@
       soundGate.style.display = show ? "grid" : "none";
     }
 
+    // Unlock ONLY audios with real sources
+    async function unlockAudioBase() {
+      const audios = [boomAudio, clickAudio, extendAudio, heartbeatAudio];
+      for (const a of audios) {
+        try {
+          const oldVol = a.volume;
+          a.volume = 0.001;
+          a.currentTime = 0;
+          await a.play();
+          a.pause();
+          a.currentTime = 0;
+          a.volume = oldVol;
+        } catch (e) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     async function startHeartbeat() {
       heartbeatAudio.loop = true;
       heartbeatAudio.currentTime = 0;
@@ -409,14 +429,15 @@
     function chooseSongIndex() {
       if (nextSongSelect.value !== "random") {
         const idx = Number(nextSongSelect.value);
-        nextSongSelect.value = "random";
-        return idx; // does not affect bag
+        nextSongSelect.value = "random"; // doesn't affect bag
+        return idx;
       }
       return getNextSongIndex();
     }
 
     async function startMusicWithIndex(idx) {
       musicAudio.loop = true;
+
       const song = songs[idx];
       musicAudio.src = song.file;
       musicAudio.currentTime = 0;
@@ -438,6 +459,11 @@
       await tryPlay(clickAudio);
     }
 
+    async function playExtendSfx() {
+      extendAudio.currentTime = 0;
+      await tryPlay(extendAudio);
+    }
+
     function tick() {
       remaining -= 1;
       timeEl.textContent = remaining;
@@ -457,7 +483,7 @@
     async function startTimer() {
       showSoundGate(false);
 
-      // unlock base sounds on the user gesture
+      // Unlock base sounds on the user gesture
       const unlocked = await unlockAudioBase();
       if (!unlocked) {
         showSoundGate(true);
@@ -471,18 +497,18 @@
       statusEl.textContent = "Detonation sequence armed.";
       setUI(true);
 
-      // choose song first, then play it (avoids trying to play music with no src)
       const idx = chooseSongIndex();
 
       const hbOk = await startHeartbeat();
       const musicOk = await startMusicWithIndex(idx);
 
-      // If audio was blocked, we pause the timer so you don't get a silent detonation.
+      // If blocked, don't run a silent timer
       if (!hbOk || !musicOk) {
         if (timerId) clearInterval(timerId);
         timerId = null;
         setUI(false);
         statusEl.textContent = "Tap to enable sound.";
+        showSoundGate(true);
         return;
       }
 
@@ -504,23 +530,27 @@
       timeEl.textContent = "--";
     }
 
-    function extendTimer() {
+    async function extendTimer() {
       if (!running) return;
+
       remaining += randomInt(3, 10);
       timeEl.textContent = remaining;
+
       statusEl.textContent = "Timer extended.";
+
+      // ✅ NEW: play extend sound
+      await playExtendSfx();
     }
 
-    // "Tap to enable sound" button
     enableSoundBtn.addEventListener("click", async () => {
       showSoundGate(false);
-      // Try to unlock base sounds again
       await unlockAudioBase();
       statusEl.textContent = "Sound enabled. Press Start.";
     });
 
     // init
     refillBag();
+
     startBtn.addEventListener("click", startTimer);
     stopBtn.addEventListener("click", stopTimer);
     extendBtn.addEventListener("click", extendTimer);
