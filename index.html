@@ -182,6 +182,38 @@ const boomAudio=document.getElementById("boom");
 const clickAudio=document.getElementById("click");
 const gulagAnnounce=document.getElementById("gulagAnnounce");
 
+let audioPrimed = false;
+
+function primeAudioOnce() {
+  if (audioPrimed) return;
+  audioPrimed = true;
+
+  const audios = [musicAudio, heartbeatAudio, boomAudio, clickAudio, gulagAnnounce];
+
+  for (const a of audios) {
+    try {
+      const oldVol = a.volume;
+      a.volume = 0.001;
+      a.currentTime = 0;
+
+      // IMPORTANT: no await — keep it in the same user-gesture chain
+      const p = a.play();
+      if (p && typeof p.then === "function") {
+        p.then(() => {
+          a.pause();
+          a.currentTime = 0;
+          a.volume = oldVol;
+        }).catch(() => {
+          // If blocked, we'll rely on a second click
+          a.volume = oldVol;
+        });
+      } else {
+        a.volume = oldVol;
+      }
+    } catch {}
+  }
+}
+
 heartbeatAudio.volume=0.7;
 hbVol.value=70;
 
@@ -274,7 +306,7 @@ async function forcePlay(audioEl) {
   }
 }
 
-async function startMusic(){
+function startMusic(){
   musicAudio.loop = true;
 
   let idx;
@@ -292,7 +324,10 @@ async function startMusic(){
 
   nowPlayingEl.textContent = "Now playing: " + song.name;
 
-  await forcePlay(musicAudio);
+  musicAudio.play().catch(() => {
+    // same fallback message
+    statusEl.textContent = "Audio blocked — press Start again (or unmute site).";
+  });
 }
 
 function tick(){
@@ -306,8 +341,11 @@ forcePlay(boomAudio);
 setUI(false);
 }}
 
-async function startTimer(){
-  await unlockAudio();
+function startTimer(){
+  // PRIME immediately on the click
+  primeAudioOnce();
+audioEl.currentTime = 0;
+audioEl.play().catch(() => {});
 
   const {min, max} = readMinMax();
   remaining = randomInt(min, max);
@@ -315,13 +353,15 @@ async function startTimer(){
   statusEl.textContent = "Detonation sequence armed.";
   setUI(true);
 
-  // Heartbeat
+  // Heartbeat (no await)
   heartbeatAudio.loop = true;
   heartbeatAudio.currentTime = 0;
-  await forcePlay(heartbeatAudio);
+  heartbeatAudio.play().catch(() => {
+    statusEl.textContent = "Audio blocked — press Start again (or unmute site).";
+  });
 
   // Music
-  await startMusic();
+  startMusic();
 
   if (timerId) clearInterval(timerId);
   timerId = setInterval(tick, 1000);
@@ -344,25 +384,23 @@ statusEl.textContent="Timer extended.";
 }
 
 let duckTimer=null;
-async function playGulag(){
-await unlockAudio();
-if(duckTimer)clearTimeout(duckTimer);
+function playGulag(){
+  primeAudioOnce();
 
-const oldMusic=musicAudio.volume;
-const oldHB=heartbeatAudio.volume;
+  const oldMusic = musicAudio.volume;
+  const oldHB = heartbeatAudio.volume;
 
-musicAudio.volume=0.2;
-heartbeatAudio.volume=0.15;
+  musicAudio.volume = Math.min(oldMusic, 0.20);
+  heartbeatAudio.volume = Math.min(oldHB, 0.15);
 
-gulagAnnounce.volume=1;
-gulagAnnounce.currentTime=0;
-gulagAnnounce.play();
+  gulagAnnounce.volume = 1;
+  gulagAnnounce.currentTime = 0;
+  gulagAnnounce.play().catch(() => {});
 
-const dur=(gulagAnnounce.duration||2.5)*1000+150;
-duckTimer=setTimeout(()=>{
-musicAudio.volume=oldMusic;
-heartbeatAudio.volume=oldHB;
-},dur);
+  setTimeout(() => {
+    musicAudio.volume = oldMusic;
+    heartbeatAudio.volume = oldHB;
+  }, 3000);
 }
 
 startBtn.onclick=startTimer;
