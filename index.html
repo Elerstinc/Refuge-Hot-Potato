@@ -241,19 +241,58 @@ nowPlayingEl.textContent="Now playing: none";
 }
 
 async function unlockAudio(){
-for(const a of [musicAudio,heartbeatAudio,boomAudio,clickAudio,gulagAnnounce]){
-try{a.volume=0.001;await a.play();a.pause();a.currentTime=0;}catch{}
+  const audios = [musicAudio, heartbeatAudio, boomAudio, clickAudio, gulagAnnounce];
+
+  for (const a of audios) {
+    try {
+      const oldVol = a.volume;
+      a.volume = 0.001;
+      a.currentTime = 0;
+
+      await forcePlay(a);
+      a.pause();
+      a.currentTime = 0;
+
+      a.volume = oldVol; // RESTORE
+    } catch {}
+  }
 }
+
+async function forcePlay(audioEl) {
+  try {
+    await audioEl.play();
+    return true;
+  } catch (e) {
+    // If autoplay is blocked, try again after a tiny delay
+    try {
+      await new Promise(r => setTimeout(r, 50));
+      await audioEl.play();
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
 
 async function startMusic(){
-let idx=nextSongSelect.value!=="random"?Number(nextSongSelect.value):getNextSongIndex();
-nextSongSelect.value="random";
-const song=songs[idx];
-musicAudio.src=song.file;
-musicAudio.currentTime=0;
-nowPlayingEl.textContent="Now playing: "+song.name;
-try{await musicAudio.play();}catch{}
+  musicAudio.loop = true;
+
+  let idx;
+  if (nextSongSelect.value !== "random") {
+    idx = Number(nextSongSelect.value);
+    nextSongSelect.value = "random";
+  } else {
+    idx = getNextSongIndex();
+  }
+
+  const song = songs[idx];
+  musicAudio.src = song.file;
+  musicAudio.currentTime = 0;
+  musicAudio.load();
+
+  nowPlayingEl.textContent = "Now playing: " + song.name;
+
+  await forcePlay(musicAudio);
 }
 
 function tick(){
@@ -262,23 +301,35 @@ if(remaining<=0){
 clearInterval(timerId);
 stopAllAudio();
 statusEl.textContent="💥 Detonation complete.";
-boomAudio.play();
+boomAudio.currentTime = 0;
+forcePlay(boomAudio);
 setUI(false);
 }}
 
 async function startTimer(){
-await unlockAudio();
-const{min,max}=readMinMax();
-remaining=randomInt(min,max);
-statusEl.textContent="Detonation sequence armed.";
-setUI(true);
-heartbeatAudio.play();
-startMusic();
-timerId=setInterval(tick,1000);
+  await unlockAudio();
+
+  const {min, max} = readMinMax();
+  remaining = randomInt(min, max);
+
+  statusEl.textContent = "Detonation sequence armed.";
+  setUI(true);
+
+  // Heartbeat
+  heartbeatAudio.loop = true;
+  heartbeatAudio.currentTime = 0;
+  await forcePlay(heartbeatAudio);
+
+  // Music
+  await startMusic();
+
+  if (timerId) clearInterval(timerId);
+  timerId = setInterval(tick, 1000);
 }
 
 async function stopTimer(){
-clickAudio.play();
+clickAudio.currentTime = 0;
+forcePlay(clickAudio);
 clearInterval(timerId);
 remaining=0;
 stopAllAudio();
@@ -320,8 +371,7 @@ extendBtn.onclick=extendTimer;
 gulagBtn.onclick=playGulag;
 
 refillBag();
-</script> 
+</script>
 
 </body>
-
 </html>
