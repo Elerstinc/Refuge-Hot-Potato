@@ -1,415 +1,528 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Refuge Hot Potato Timer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Refuge Hot Potato Timer</title>
 
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%92%A3%3C/text%3E%3C/svg%3E">
+  <!-- Inline favicon (prevents favicon.ico 404) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%92%A3%3C/text%3E%3C/svg%3E">
 
-<style>
-@font-face{
-  font-family:"Brianne's hand";
-  src:url("briannes-hand.ttf") format("truetype");
-}
+  <style>
+    @font-face{
+      font-family:"Brianne's hand";
+      src:url("briannes-hand.ttf") format("truetype");
+      font-weight:normal;
+      font-style:normal;
+    }
 
-:root{ color-scheme: dark; }
+    :root{ color-scheme: dark; }
 
-body{
-  margin:0;
-  height:100vh;
-  display:grid;
-  place-items:center;
-  font-family:"Brianne's hand", system-ui, Arial, sans-serif;
-  color:#f0f0f0;
-  background:
-    linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.75)),
-    url("background.jpg") center/cover no-repeat fixed,
-    #0f0f0f;
-}
+    body{
+      margin:0;
+      height:100vh;
+      display:grid;
+      place-items:center;
+      font-family:"Brianne's hand", system-ui, Arial, sans-serif;
+      color:#f0f0f0;
+      background:
+        linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.75)),
+        url("background.jpg") center/cover no-repeat fixed,
+        #0f0f0f;
+    }
 
-.topLeftMenu{
-  position:fixed;
-  top:14px;
-  left:14px;
-  display:flex;
-  gap:10px;
-  align-items:center;
-  padding:10px 12px;
-  border-radius:14px;
-  background:rgba(20,20,20,0.7);
-  border:1px solid rgba(255,255,255,0.12);
-  backdrop-filter:blur(6px);
-}
+    .topLeftMenu{
+      position:fixed;
+      top:14px;
+      left:14px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(20,20,20,0.7);
+      border:1px solid rgba(255,255,255,0.12);
+      backdrop-filter:blur(6px);
+      box-shadow:0 16px 28px rgba(0,0,0,0.35);
+      z-index:10;
+      user-select:none;
+    }
+    .topLeftMenu label{
+      font-size:14px;
+      letter-spacing:0.6px;
+      white-space:nowrap;
+    }
+    .topLeftMenu select{
+      font-family:inherit;
+      font-size:14px;
+      padding:8px 10px;
+      border-radius:12px;
+      background:rgba(0,0,0,0.35);
+      color:#f0f0f0;
+      border:1px solid rgba(255,255,255,0.18);
+      cursor:pointer;
+      outline:none;
+    }
 
-.topLeftMenu select{
-  font-family:inherit;
-  font-size:14px;
-  padding:8px 10px;
-  border-radius:12px;
-  background:rgba(0,0,0,0.35);
-  color:#f0f0f0;
-  border:1px solid rgba(255,255,255,0.18);
-}
+    .card{
+      background:rgba(20,20,20,0.75);
+      border-radius:16px;
+      padding:28px;
+      min-width:380px;
+      text-align:center;
+      border:1px solid rgba(255,255,255,0.12);
+      backdrop-filter:blur(6px);
+      box-shadow:0 20px 40px rgba(0,0,0,0.5);
+    }
 
-.card{
-  background:rgba(20,20,20,0.75);
-  border-radius:16px;
-  padding:28px;
-  min-width:380px;
-  text-align:center;
-  border:1px solid rgba(255,255,255,0.12);
-  backdrop-filter:blur(6px);
-  box-shadow:0 20px 40px rgba(0,0,0,0.5);
-}
+    h1{
+      margin:0 0 10px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+    }
 
-h1{ margin:0 0 10px; letter-spacing:2px; text-transform:uppercase; }
+    /* Hidden internal timer */
+    #time{ display:none; }
 
-#time{ display:none; }
+    #status, #nowPlaying{
+      font-size:15px;
+      margin-top:8px;
+      letter-spacing:0.6px;
+    }
 
-#status,#nowPlaying{ font-size:15px; margin-top:8px; }
+    .activePulse{ animation:pulseRed 1.15s infinite; }
+    @keyframes pulseRed{
+      0%   { color:#f0f0f0; text-shadow:none; }
+      50%  { color:#ff4b4b; text-shadow:0 0 12px rgba(255,75,75,0.35); }
+      100% { color:#f0f0f0; text-shadow:none; }
+    }
 
-.activePulse{ animation:pulseRed 1.15s infinite; }
-@keyframes pulseRed{
-0%{color:#f0f0f0}50%{color:#ff4b4b}100%{color:#f0f0f0}
-}
+    .controls{ margin-top:14px; }
 
-button{
-  margin:8px;
-  padding:12px 18px;
-  font-size:16px;
-  border-radius:12px;
-  border:none;
-  cursor:pointer;
-  font-family:inherit;
-}
-button:disabled{ opacity:0.5; cursor:not-allowed; }
+    button{
+      margin:8px;
+      padding:12px 18px;
+      font-size:16px;
+      border-radius:12px;
+      border:none;
+      cursor:pointer;
+      font-family:inherit;
+    }
+    button:disabled{ opacity:0.5; cursor:not-allowed; }
 
-.panel{ margin-top:14px; display:grid; gap:10px; text-align:left; }
-.row{ display:flex; gap:10px; align-items:center; justify-content:space-between; }
+    .panel{
+      margin-top:14px;
+      display:grid;
+      gap:10px;
+      text-align:left;
+    }
 
-input[type="number"]{
-  width:92px;
-  padding:8px 10px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,0.18);
-  background:rgba(0,0,0,0.35);
-  color:#f0f0f0;
-}
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:space-between;
+    }
 
-input[type="range"]{ width:180px; }
-</style>
+    .field{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .field label{
+      font-size:14px;
+      letter-spacing:0.4px;
+      opacity:0.95;
+      white-space:nowrap;
+    }
+
+    input[type="number"]{
+      width:92px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.18);
+      background:rgba(0,0,0,0.35);
+      color:#f0f0f0;
+      font-family:inherit;
+      font-size:14px;
+      outline:none;
+    }
+
+    input[type="range"]{ width:180px; }
+
+    .hint{
+      margin-top:10px;
+      font-size:12px;
+      opacity:0.75;
+      line-height:1.2;
+      text-align:center;
+    }
+  </style>
 </head>
 
 <body>
+  <div class="topLeftMenu">
+    <label for="nextSongSelect">Next song:</label>
+    <select id="nextSongSelect">
+      <option value="random" selected>Random</option>
 
-<div class="topLeftMenu">
-<label>Next song:</label>
-<select id="nextSongSelect">
-<option value="random" selected>Random</option>
-<option value="0">Pandemonium</option>
-<option value="1">Mole Patrol</option>
-<option value="2">Magni & Modi</option>
-<option value="3">Nemesis Pursuit</option>
-<option value="4">Mushroom Gorge</option>
-<option value="5">Toad's Factory</option>
-<option value="6">Moonview Highway</option>
-<option value="7">Nemesis Approach</option>
-<option value="8">Peaceful Pier</option>
-<option value="9">Hush.</option>
-<option value="10">Indigo Underground</option>
-</select>
-</div>
+      <option value="0">Pandemonium</option>
+      <option value="1">Mole Patrol</option>
+      <option value="2">Magni &amp; Modi</option>
+      <option value="3">Nemesis Pursuit</option>
+      <option value="4">Mushroom Gorge</option>
+      <option value="5">Toad&#39;s Factory</option>
+      <option value="6">Moonview Highway</option>
 
-<div class="card">
-<h1>Hot Potato</h1>
+      <option value="7">Nemesis Approach</option>
+      <option value="8">Peaceful Pier</option>
+      <option value="9">Hush.</option>
+      <option value="10">Indigo Underground</option>
+    </select>
+  </div>
 
-<div id="status">Awaiting activation.</div>
-<div id="time">--</div>
-<div id="nowPlaying">Now playing: none</div>
+  <div class="card">
+    <h1>Hot Potato</h1>
 
-<div class="controls">
-<button id="startBtn">Start</button>
-<button id="stopBtn" disabled>Abort</button>
-<button id="extendBtn" disabled>Extend the timer</button>
-<button id="gulagBtn">Gulag Match</button>
-</div>
+    <div id="status">Awaiting activation.</div>
+    <div id="time">--</div>
+    <div id="nowPlaying">Now playing: none</div>
 
-<div class="panel">
-<div class="row">
-<label>Min seconds:</label>
-<input id="minSeconds" type="number" placeholder="10">
-<label>Max seconds:</label>
-<input id="maxSeconds" type="number" placeholder="40">
-</div>
+    <div class="controls">
+      <button id="startBtn">Start</button>
+      <button id="stopBtn" disabled>Abort</button>
+      <button id="extendBtn" disabled>Extend the timer</button>
+      <button id="gulagBtn">Gulag Match</button>
+    </div>
 
-<div class="row">
-<label>Heartbeat volume:</label>
-<input id="hbVol" type="range" min="0" max="100">
-<span id="hbVolLabel">70%</span>
-</div>
-</div>
+    <div class="panel">
+      <div class="row">
+        <div class="field">
+          <label for="minSeconds">Min seconds:</label>
+          <input id="minSeconds" type="number" min="1" step="1" placeholder="10" inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label for="maxSeconds">Max seconds:</label>
+          <input id="maxSeconds" type="number" min="1" step="1" placeholder="40" inputmode="numeric" />
+        </div>
+      </div>
 
-<audio id="music" preload="auto"></audio>
-<audio id="heartbeat" src="heartbeat.mp3" preload="auto" loop></audio>
-<audio id="boom" src="boom.mp3" preload="auto"></audio>
-<audio id="click" src="click.mp3" preload="auto"></audio>
-<audio id="gulagAnnounce" src="gulag.mp3" preload="auto"></audio>
+      <div class="row">
+        <div class="field">
+          <label for="hbVol">Heartbeat volume:</label>
+          <input id="hbVol" type="range" min="0" max="100" step="1" />
+          <span id="hbVolLabel" style="font-size:14px; opacity:0.9;">70%</span>
+        </div>
+      </div>
+    </div>
 
-</div>
+    <div class="hint">
+      Leave Min/Max blank to use default (10–40). Songs loop automatically. If audio is blocked, click Start once more or unmute the site.
+    </div>
 
-<script>
-const statusEl=document.getElementById("status");
-const timeEl=document.getElementById("time");
-const nowPlayingEl=document.getElementById("nowPlaying");
+    <!-- Audio -->
+    <audio id="music" preload="auto"></audio>
+    <audio id="heartbeat" src="heartbeat.mp3" preload="auto" loop></audio>
+    <audio id="boom" src="boom.mp3" preload="auto"></audio>
+    <audio id="click" src="click.mp3" preload="auto"></audio>
+    <audio id="gulagAnnounce" src="gulag.mp3" preload="auto"></audio>
+  </div>
 
-const startBtn=document.getElementById("startBtn");
-const stopBtn=document.getElementById("stopBtn");
-const extendBtn=document.getElementById("extendBtn");
-const gulagBtn=document.getElementById("gulagBtn");
+  <script>
+    const statusEl = document.getElementById("status");
+    const timeEl = document.getElementById("time");
+    const nowPlayingEl = document.getElementById("nowPlaying");
 
-const minSecondsInput=document.getElementById("minSeconds");
-const maxSecondsInput=document.getElementById("maxSeconds");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const extendBtn = document.getElementById("extendBtn");
+    const gulagBtn = document.getElementById("gulagBtn");
 
-const hbVol=document.getElementById("hbVol");
-const hbVolLabel=document.getElementById("hbVolLabel");
+    const minSecondsInput = document.getElementById("minSeconds");
+    const maxSecondsInput = document.getElementById("maxSeconds");
 
-const nextSongSelect=document.getElementById("nextSongSelect");
+    const hbVol = document.getElementById("hbVol");
+    const hbVolLabel = document.getElementById("hbVolLabel");
 
-const musicAudio=document.getElementById("music");
-const heartbeatAudio=document.getElementById("heartbeat");
-const boomAudio=document.getElementById("boom");
-const clickAudio=document.getElementById("click");
-const gulagAnnounce=document.getElementById("gulagAnnounce");
+    const nextSongSelect = document.getElementById("nextSongSelect");
 
-let audioPrimed = false;
+    const musicAudio = document.getElementById("music");
+    const heartbeatAudio = document.getElementById("heartbeat");
+    const boomAudio = document.getElementById("boom");
+    const clickAudio = document.getElementById("click");
+    const gulagAnnounce = document.getElementById("gulagAnnounce");
 
-function primeAudioOnce() {
-  if (audioPrimed) return;
-  audioPrimed = true;
+    // Default volumes
+    const DEFAULT_HB_VOL = 0.70;
+    heartbeatAudio.volume = DEFAULT_HB_VOL;
+    hbVol.value = String(Math.round(DEFAULT_HB_VOL * 100));
+    hbVolLabel.textContent = `${hbVol.value}%`;
 
-  const audios = [musicAudio, heartbeatAudio, boomAudio, clickAudio, gulagAnnounce];
+    hbVol.addEventListener("input", () => {
+      const v = Math.max(0, Math.min(100, Number(hbVol.value)));
+      heartbeatAudio.volume = v / 100;
+      hbVolLabel.textContent = `${v}%`;
+    });
 
-  for (const a of audios) {
-    try {
-      const oldVol = a.volume;
-      a.volume = 0.001;
-      a.currentTime = 0;
+    const songs = [
+      { file: "song1.mp3",  name: "Pandemonium" },
+      { file: "song2.mp3",  name: "Mole Patrol" },
+      { file: "song3.mp3",  name: "Magni & Modi" },
+      { file: "song4.mp3",  name: "Nemesis Pursuit" },
+      { file: "song5.mp3",  name: "Mushroom Gorge" },
+      { file: "song6.mp3",  name: "Toad's Factory" },
+      { file: "song7.mp3",  name: "Moonview Highway" },
+      { file: "song8.mp3",  name: "Nemesis Approach" },
+      { file: "song9.mp3",  name: "Peaceful Pier" },
+      { file: "song10.mp3", name: "Hush." },
+      { file: "song11.mp3", name: "Indigo Underground" }
+    ];
 
-      // IMPORTANT: no await — keep it in the same user-gesture chain
-      const p = a.play();
-      if (p && typeof p.then === "function") {
-        p.then(() => {
-          a.pause();
-          a.currentTime = 0;
-          a.volume = oldVol;
-        }).catch(() => {
-          // If blocked, we'll rely on a second click
-          a.volume = oldVol;
-        });
-      } else {
-        a.volume = oldVol;
+    // Shuffle-bag: no repeats until all played
+    let bag = [];
+    function refillBag() {
+      bag = [...Array(songs.length).keys()];
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
       }
-    } catch {}
-  }
-}
-
-heartbeatAudio.volume=0.7;
-hbVol.value=70;
-
-hbVol.addEventListener("input",()=>{
-heartbeatAudio.volume=hbVol.value/100;
-hbVolLabel.textContent=hbVol.value+"%";
-});
-
-const songs=[
-{file:"song1.mp3",name:"Pandemonium"},
-{file:"song2.mp3",name:"Mole Patrol"},
-{file:"song3.mp3",name:"Magni & Modi"},
-{file:"song4.mp3",name:"Nemesis Pursuit"},
-{file:"song5.mp3",name:"Mushroom Gorge"},
-{file:"song6.mp3",name:"Toad's Factory"},
-{file:"song7.mp3",name:"Moonview Highway"},
-{file:"song8.mp3",name:"Nemesis Approach"},
-{file:"song9.mp3",name:"Peaceful Pier"},
-{file:"song10.mp3",name:"Hush."},
-{file:"song11.mp3",name:"Indigo Underground"}
-];
-
-let bag=[];
-function refillBag(){
-bag=[...Array(songs.length).keys()];
-for(let i=bag.length-1;i>0;i--){
-const j=Math.floor(Math.random()*(i+1));
-[bag[i],bag[j]]=[bag[j],bag[i]];
-}}
-function getNextSongIndex(){
-if(bag.length===0)refillBag();
-return bag.pop();
-}
-
-let timerId=null,remaining=0,running=false;
-
-function setUI(r){
-running=r;
-startBtn.disabled=r;
-stopBtn.disabled=!r;
-extendBtn.disabled=!r;
-}
-
-function readMinMax(){
-let min=Number(minSecondsInput.value)||10;
-let max=Number(maxSecondsInput.value)||40;
-if(min>max)[min,max]=[max,min];
-return{min,max};
-}
-
-function randomInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
-
-function stopAllAudio(){
-musicAudio.pause();heartbeatAudio.pause();
-musicAudio.currentTime=0;heartbeatAudio.currentTime=0;
-nowPlayingEl.textContent="Now playing: none";
-}
-
-async function unlockAudio(){
-  const audios = [musicAudio, heartbeatAudio, boomAudio, clickAudio, gulagAnnounce];
-
-  for (const a of audios) {
-    try {
-      const oldVol = a.volume;
-      a.volume = 0.001;
-      a.currentTime = 0;
-
-      await forcePlay(a);
-      a.pause();
-      a.currentTime = 0;
-
-      a.volume = oldVol; // RESTORE
-    } catch {}
-  }
-}
-
-async function forcePlay(audioEl) {
-  try {
-    await audioEl.play();
-    return true;
-  } catch (e) {
-    // If autoplay is blocked, try again after a tiny delay
-    try {
-      await new Promise(r => setTimeout(r, 50));
-      await audioEl.play();
-      return true;
-    } catch {
-      return false;
     }
-  }
-}
+    function getNextSongIndex() {
+      if (bag.length === 0) refillBag();
+      return bag.pop();
+    }
 
-function startMusic(){
-  musicAudio.loop = true;
+    let timerId = null;
+    let remaining = 0;
+    let running = false;
 
-  let idx;
-  if (nextSongSelect.value !== "random") {
-    idx = Number(nextSongSelect.value);
-    nextSongSelect.value = "random";
-  } else {
-    idx = getNextSongIndex();
-  }
+    function setUI(isRunning) {
+      running = isRunning;
+      startBtn.disabled = isRunning;
+      stopBtn.disabled = !isRunning;
+      extendBtn.disabled = !isRunning;
 
-  const song = songs[idx];
-  musicAudio.src = song.file;
-  musicAudio.currentTime = 0;
-  musicAudio.load();
+      statusEl.classList.toggle("activePulse", isRunning);
+      nowPlayingEl.classList.toggle("activePulse", isRunning);
+    }
 
-  nowPlayingEl.textContent = "Now playing: " + song.name;
+    function clampInt(n, min, max) {
+      return Math.min(max, Math.max(min, n));
+    }
 
-  musicAudio.play().catch(() => {
-    // same fallback message
-    statusEl.textContent = "Audio blocked — press Start again (or unmute site).";
-  });
-}
+    function readMinMaxSeconds() {
+      const rawMin = minSecondsInput.value.trim();
+      const rawMax = maxSecondsInput.value.trim();
 
-function tick(){
-remaining--;
-if(remaining<=0){
-clearInterval(timerId);
-stopAllAudio();
-statusEl.textContent="💥 Detonation complete.";
-boomAudio.currentTime = 0;
-forcePlay(boomAudio);
-setUI(false);
-}}
+      let minS = 10;
+      let maxS = 40;
 
-function startTimer(){
-  // PRIME immediately on the click
-  primeAudioOnce();
-audioEl.currentTime = 0;
-audioEl.play().catch(() => {});
+      if (rawMin !== "") {
+        const parsed = Number(rawMin);
+        if (Number.isFinite(parsed)) minS = Math.floor(parsed);
+      }
+      if (rawMax !== "") {
+        const parsed = Number(rawMax);
+        if (Number.isFinite(parsed)) maxS = Math.floor(parsed);
+      }
 
-  const {min, max} = readMinMax();
-  remaining = randomInt(min, max);
+      minS = Math.max(1, minS);
+      maxS = Math.max(1, maxS);
 
-  statusEl.textContent = "Detonation sequence armed.";
-  setUI(true);
+      if (minS > maxS) [minS, maxS] = [maxS, minS];
 
-  // Heartbeat (no await)
-  heartbeatAudio.loop = true;
-  heartbeatAudio.currentTime = 0;
-  heartbeatAudio.play().catch(() => {
-    statusEl.textContent = "Audio blocked — press Start again (or unmute site).";
-  });
+      minS = clampInt(minS, 1, 9999);
+      maxS = clampInt(maxS, 1, 9999);
 
-  // Music
-  startMusic();
+      return { minS, maxS };
+    }
 
-  if (timerId) clearInterval(timerId);
-  timerId = setInterval(tick, 1000);
-}
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
 
-async function stopTimer(){
-clickAudio.currentTime = 0;
-forcePlay(clickAudio);
-clearInterval(timerId);
-remaining=0;
-stopAllAudio();
-statusEl.textContent="Sequence aborted.";
-setUI(false);
-}
+    function stopAllAudio() {
+      musicAudio.pause();
+      heartbeatAudio.pause();
 
-function extendTimer(){
-if(!running)return;
-remaining+=randomInt(3,10);
-statusEl.textContent="Timer extended.";
-}
+      musicAudio.currentTime = 0;
+      heartbeatAudio.currentTime = 0;
 
-let duckTimer=null;
-function playGulag(){
-  primeAudioOnce();
+      musicAudio.removeAttribute("src");
+      musicAudio.load();
 
-  const oldMusic = musicAudio.volume;
-  const oldHB = heartbeatAudio.volume;
+      nowPlayingEl.textContent = "Now playing: none";
+    }
 
-  musicAudio.volume = Math.min(oldMusic, 0.20);
-  heartbeatAudio.volume = Math.min(oldHB, 0.15);
+    // IMPORTANT: keep audio priming inside the click gesture (no await in the chain)
+    let audioPrimed = false;
+    function primeAudioOnce() {
+      if (audioPrimed) return;
+      audioPrimed = true;
 
-  gulagAnnounce.volume = 1;
-  gulagAnnounce.currentTime = 0;
-  gulagAnnounce.play().catch(() => {});
+      const audios = [boomAudio, clickAudio, heartbeatAudio, musicAudio, gulagAnnounce];
 
-  setTimeout(() => {
-    musicAudio.volume = oldMusic;
-    heartbeatAudio.volume = oldHB;
-  }, 3000);
-}
+      for (const a of audios) {
+        try {
+          const oldVol = a.volume;
+          a.volume = 0.001;
+          a.currentTime = 0;
 
-startBtn.onclick=startTimer;
-stopBtn.onclick=stopTimer;
-extendBtn.onclick=extendTimer;
-gulagBtn.onclick=playGulag;
+          const p = a.play(); // do NOT await
+          if (p && typeof p.then === "function") {
+            p.then(() => {
+              a.pause();
+              a.currentTime = 0;
+              a.volume = oldVol;
+            }).catch(() => {
+              a.volume = oldVol;
+            });
+          } else {
+            a.volume = oldVol;
+          }
+        } catch {}
+      }
+    }
 
-refillBag();
-</script>
+    function startHeartbeat() {
+      heartbeatAudio.loop = true;
+      heartbeatAudio.currentTime = 0;
+      heartbeatAudio.play().catch(() => {
+        statusEl.textContent = "Audio blocked — click Start again or unmute the site.";
+      });
+    }
 
+    function startMusic() {
+      musicAudio.loop = true;
+
+      let idx;
+      if (nextSongSelect.value !== "random") {
+        idx = Number(nextSongSelect.value);
+        nextSongSelect.value = "random"; // doesn't affect bag tracking
+      } else {
+        idx = getNextSongIndex();
+      }
+
+      const song = songs[idx];
+      musicAudio.src = song.file;
+      musicAudio.currentTime = 0;
+      musicAudio.load();
+
+      nowPlayingEl.textContent = `Now playing: ${song.name}`;
+      musicAudio.play().catch(() => {
+        statusEl.textContent = "Audio blocked — click Start again or unmute the site.";
+      });
+    }
+
+    function playBoom() {
+      primeAudioOnce();
+      boomAudio.currentTime = 0;
+      boomAudio.play().catch(() => {});
+    }
+
+    function playClick() {
+      primeAudioOnce();
+      clickAudio.currentTime = 0;
+      clickAudio.play().catch(() => {});
+    }
+
+    // Gulag announcement: loud + audio ducking
+    let duckRestoreTimer = null;
+    function playGulagAnnouncement() {
+      primeAudioOnce();
+
+      if (duckRestoreTimer) {
+        clearTimeout(duckRestoreTimer);
+        duckRestoreTimer = null;
+      }
+
+      const oldMusicVol = musicAudio.volume;
+      const oldHbVol = heartbeatAudio.volume;
+
+      // Duck other audio (if they're playing)
+      musicAudio.volume = Math.min(oldMusicVol, 0.20);
+      heartbeatAudio.volume = Math.min(oldHbVol, 0.15);
+
+      gulagAnnounce.volume = 1.0;
+      gulagAnnounce.currentTime = 0;
+      gulagAnnounce.play().catch(() => {
+        statusEl.textContent = "Audio blocked — click Gulag Match again or unmute the site.";
+      });
+
+      // Restore after ~3s (safe default if duration isn't readable)
+      duckRestoreTimer = setTimeout(() => {
+        musicAudio.volume = oldMusicVol;
+        heartbeatAudio.volume = oldHbVol;
+        duckRestoreTimer = null;
+      }, 3200);
+    }
+
+    function tick() {
+      remaining -= 1;
+      timeEl.textContent = remaining;
+
+      if (remaining <= 0) {
+        clearInterval(timerId);
+        timerId = null;
+
+        stopAllAudio();
+        setUI(false);
+
+        statusEl.textContent = "💥 Detonation complete.";
+        playBoom();
+      }
+    }
+
+    function startTimer() {
+      // Keep this FIRST in the click chain
+      primeAudioOnce();
+
+      const { minS, maxS } = readMinMaxSeconds();
+      remaining = randomInt(minS, maxS);
+      timeEl.textContent = remaining;
+
+      statusEl.textContent = "Detonation sequence armed.";
+      setUI(true);
+
+      startHeartbeat();
+      startMusic();
+
+      if (timerId) clearInterval(timerId);
+      timerId = setInterval(tick, 1000);
+    }
+
+    function stopTimer() {
+      playClick();
+
+      if (timerId) clearInterval(timerId);
+      timerId = null;
+      remaining = 0;
+
+      stopAllAudio();
+      setUI(false);
+
+      statusEl.textContent = "Sequence aborted.";
+      timeEl.textContent = "--";
+    }
+
+    function extendTimer() {
+      if (!running) return;
+
+      remaining += randomInt(3, 10); // don't reveal how much
+      timeEl.textContent = remaining;
+      statusEl.textContent = "Timer extended.";
+    }
+
+    // init
+    refillBag();
+
+    startBtn.addEventListener("click", startTimer);
+    stopBtn.addEventListener("click", stopTimer);
+    extendBtn.addEventListener("click", extendTimer);
+    gulagBtn.addEventListener("click", playGulagAnnouncement);
+  </script>
 </body>
 </html>
