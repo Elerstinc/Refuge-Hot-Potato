@@ -229,6 +229,7 @@
     <audio id="boom" src="boom.mp3" preload="auto"></audio>
     <audio id="click" src="click.mp3" preload="auto"></audio>
     <audio id="gulagAnnounce" src="gulag.mp3" preload="auto"></audio>
+    <audio id="extend" src="extend.mp3" preload="auto"></audio>
   </div>
 
   <script>
@@ -254,6 +255,7 @@
     const boomAudio = document.getElementById("boom");
     const clickAudio = document.getElementById("click");
     const gulagAnnounce = document.getElementById("gulagAnnounce");
+    const extendAudio = document.getElementById("extend");
 
     // Default volumes
     const DEFAULT_HB_VOL = 0.70;
@@ -363,7 +365,7 @@
       if (audioPrimed) return;
       audioPrimed = true;
 
-      const audios = [boomAudio, clickAudio, heartbeatAudio, musicAudio, gulagAnnounce];
+      const audios = [boomAudio, clickAudio, extendAudio, heartbeatAudio, musicAudio, gulagAnnounce];
 
       for (const a of audios) {
         try {
@@ -428,6 +430,12 @@
       clickAudio.currentTime = 0;
       clickAudio.play().catch(() => {});
     }
+
+    function playExtend() {
+  primeAudioOnce();
+  extendAudio.currentTime = 0;
+  extendAudio.play().catch(() => {});
+}
 
     // Gulag announcement: loud + audio ducking
     let duckRestoreTimer = null;
@@ -509,12 +517,13 @@
     }
 
     function extendTimer() {
-      if (!running) return;
+  if (!running) return;
 
-      remaining += randomInt(3, 10); // don't reveal how much
-      timeEl.textContent = remaining;
-      statusEl.textContent = "Timer extended.";
-    }
+  playExtend();
+  remaining += randomInt(3, 10);
+  timeEl.textContent = remaining;
+  statusEl.textContent = "Timer extended.";
+}
 
     // init
     refillBag();
