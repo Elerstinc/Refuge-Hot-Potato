@@ -31,7 +31,6 @@
         #0f0f0f;
     }
 
-    /* Top-left song override menu */
     .topLeftMenu{
       position:fixed;
       top:14px;
@@ -74,7 +73,6 @@
       border:1px solid rgba(255,255,255,0.12);
       backdrop-filter:blur(6px);
       box-shadow:0 20px 40px rgba(0,0,0,0.5);
-      position:relative;
     }
 
     h1{
@@ -92,7 +90,6 @@
       letter-spacing:0.6px;
     }
 
-    /* Pulse red while active */
     .activePulse{ animation:pulseRed 1.15s infinite; }
     @keyframes pulseRed{
       0%   { color:#f0f0f0; text-shadow:none; }
@@ -163,38 +160,10 @@
       line-height:1.2;
       text-align:center;
     }
-
-    /* Sound gate overlay (shows if browser blocks audio) */
-    .soundGate{
-      position:absolute;
-      inset:0;
-      display:none;
-      place-items:center;
-      padding:18px;
-      background:rgba(0,0,0,0.65);
-      border-radius:16px;
-      backdrop-filter: blur(6px);
-    }
-    .soundGateInner{
-      background:rgba(20,20,20,0.85);
-      border:1px solid rgba(255,255,255,0.14);
-      padding:16px 14px;
-      border-radius:14px;
-      text-align:center;
-      max-width:320px;
-      box-shadow:0 16px 28px rgba(0,0,0,0.35);
-    }
-    .soundGateInner p{
-      margin:0 0 10px;
-      font-size:14px;
-      letter-spacing:0.4px;
-      opacity:0.95;
-    }
   </style>
 </head>
 
 <body>
-  <!-- Song override menu -->
   <div class="topLeftMenu">
     <label for="nextSongSelect">Next song:</label>
     <select id="nextSongSelect">
@@ -206,17 +175,14 @@
       <option value="4">Mushroom Gorge</option>
       <option value="5">Toad&#39;s Factory</option>
       <option value="6">Moonview Highway</option>
+      <option value="7">Nemesis Approach</option>
+      <option value="8">Peaceful Pier</option>
+      <option value="9">Hush.</option>
+      <option value="10">Indigo Underground</option>
     </select>
   </div>
 
-  <div class="card" id="card">
-    <div class="soundGate" id="soundGate">
-      <div class="soundGateInner">
-        <p>Sound is blocked by the browser.</p>
-        <button id="enableSoundBtn">Tap to enable sound</button>
-      </div>
-    </div>
-
+  <div class="card">
     <h1>Hot Potato</h1>
 
     <div id="status">Awaiting activation.</div>
@@ -227,6 +193,7 @@
       <button id="startBtn">Start</button>
       <button id="stopBtn" disabled>Abort</button>
       <button id="extendBtn" disabled>Extend the timer</button>
+      <button id="gulagBtn">Gulag match</button>
     </div>
 
     <div class="panel">
@@ -245,13 +212,13 @@
         <div class="field">
           <label for="hbVol">Heartbeat volume:</label>
           <input id="hbVol" type="range" min="0" max="100" step="1" />
-          <span id="hbVolLabel" style="font-size:14px; opacity:0.9;">70%</span>
+          <span id="hbVolLabel" style="font-size:14px; opacity:0.9;">60%</span>
         </div>
       </div>
     </div>
 
     <div class="hint">
-      Leave Min/Max blank to use default (10–40). Songs + heartbeat loop automatically.
+      Leave Min/Max blank to use default (10–40). Songs loop automatically.
     </div>
 
     <!-- Audio -->
@@ -259,7 +226,7 @@
     <audio id="heartbeat" src="heartbeat.mp3" preload="auto" loop></audio>
     <audio id="boom" src="boom.mp3" preload="auto"></audio>
     <audio id="click" src="click.mp3" preload="auto"></audio>
-    <audio id="extendSfx" src="extend.mp3" preload="auto"></audio>
+    <audio id="gulagAnnounce" src="gulag.mp3" preload="auto"></audio>
   </div>
 
   <script>
@@ -279,17 +246,16 @@
 
     const nextSongSelect = document.getElementById("nextSongSelect");
 
-    const soundGate = document.getElementById("soundGate");
-    const enableSoundBtn = document.getElementById("enableSoundBtn");
-
     const musicAudio = document.getElementById("music");
     const heartbeatAudio = document.getElementById("heartbeat");
     const boomAudio = document.getElementById("boom");
     const clickAudio = document.getElementById("click");
-    const extendAudio = document.getElementById("extendSfx");
+
+    const gulagBtn = document.getElementById("gulagBtn");
+    const gulagAnnounce = document.getElementById("gulagAnnounce");
 
     // Louder default heartbeat
-    const DEFAULT_HB_VOL = 0.70;
+    const DEFAULT_HB_VOL = 0.70; // louder than before
     heartbeatAudio.volume = DEFAULT_HB_VOL;
     hbVol.value = String(Math.round(DEFAULT_HB_VOL * 100));
     hbVolLabel.textContent = `${hbVol.value}%`;
@@ -307,7 +273,11 @@
       { file: "song4.mp3", name: "Nemesis Pursuit" },
       { file: "song5.mp3", name: "Mushroom Gorge" },
       { file: "song6.mp3", name: "Toad's Factory" },
-      { file: "song7.mp3", name: "Moonview Highway" }
+      { file: "song7.mp3", name: "Moonview Highway" },
+      { file: "song8.mp3", name: "Nemesis Approach" },
+      { file: "song9.mp3", name: "Peaceful Pier" },
+      { file: "song10.mp3", name: "Hush." },
+      { file: "song11.mp3", name: "Indigo Underground" }
     ];
 
     // Shuffle-bag: no repeats until all played
@@ -386,22 +356,9 @@
       nowPlayingEl.textContent = "Now playing: none";
     }
 
-    async function tryPlay(audio) {
-      try {
-        await audio.play();
-        return true;
-      } catch (e) {
-        return false;
-      }
-    }
-
-    function showSoundGate(show) {
-      soundGate.style.display = show ? "grid" : "none";
-    }
-
-    // Unlock ONLY audios with real sources
-    async function unlockAudioBase() {
-      const audios = [boomAudio, clickAudio, extendAudio, heartbeatAudio];
+    // Mobile audio unlock: primes audio so boom works later on phones
+    async function unlockAudio() {
+      const audios = [boomAudio, clickAudio, heartbeatAudio, musicAudio];
       for (const a of audios) {
         try {
           const oldVol = a.volume;
@@ -412,31 +369,27 @@
           a.currentTime = 0;
           a.volume = oldVol;
         } catch (e) {
-          return false;
+          console.warn("Unlock failed for:", a.id, e);
         }
       }
-      return true;
     }
 
     async function startHeartbeat() {
       heartbeatAudio.loop = true;
       heartbeatAudio.currentTime = 0;
-      const ok = await tryPlay(heartbeatAudio);
-      if (!ok) showSoundGate(true);
-      return ok;
+      try { await heartbeatAudio.play(); } catch {}
     }
 
-    function chooseSongIndex() {
-      if (nextSongSelect.value !== "random") {
-        const idx = Number(nextSongSelect.value);
-        nextSongSelect.value = "random"; // doesn't affect bag
-        return idx;
-      }
-      return getNextSongIndex();
-    }
-
-    async function startMusicWithIndex(idx) {
+    async function startMusic() {
       musicAudio.loop = true;
+
+      let idx;
+      if (nextSongSelect.value !== "random") {
+        idx = Number(nextSongSelect.value);
+        nextSongSelect.value = "random"; // does not affect bag tracking
+      } else {
+        idx = getNextSongIndex();
+      }
 
       const song = songs[idx];
       musicAudio.src = song.file;
@@ -444,28 +397,60 @@
       musicAudio.load();
 
       nowPlayingEl.textContent = `Now playing: ${song.name}`;
-      const ok = await tryPlay(musicAudio);
-      if (!ok) showSoundGate(true);
-      return ok;
+      try { await musicAudio.play(); } catch {}
     }
 
     async function playBoom() {
       boomAudio.currentTime = 0;
-      await tryPlay(boomAudio);
+      try { await boomAudio.play(); } catch {}
     }
 
     async function playClick() {
       clickAudio.currentTime = 0;
-      await tryPlay(clickAudio);
+      try { await clickAudio.play(); } catch {}
     }
 
-    async function playExtendSfx() {
-      extendAudio.currentTime = 0;
-      await tryPlay(extendAudio);
-    }
+    let duckRestoreTimer = null;
+
+async function playGulagAnnouncement() {
+  // Prime audio (helps mobile)
+  await unlockAudio();
+
+  // Cancel any pending restore
+  if (duckRestoreTimer) {
+    clearTimeout(duckRestoreTimer);
+    duckRestoreTimer = null;
+  }
+
+  // Save current volumes
+  const oldMusicVol = musicAudio.volume;
+  const oldHbVol = heartbeatAudio.volume;
+
+  // Duck other audio so the announcement cuts through
+  musicAudio.volume = Math.min(oldMusicVol, 0.20);
+  heartbeatAudio.volume = Math.min(oldHbVol, 0.15);
+
+  // BLAST the announcement
+  gulagAnnounce.volume = 1.0;
+  gulagAnnounce.currentTime = 0;
+
+  try { await gulagAnnounce.play(); } catch {}
+
+  // Restore volumes shortly after it finishes
+  // (fallback length if metadata isn't ready)
+  const ms = Number.isFinite(gulagAnnounce.duration) && gulagAnnounce.duration > 0
+    ? Math.ceil(gulagAnnounce.duration * 1000) + 150
+    : 2500;
+
+  duckRestoreTimer = setTimeout(() => {
+    musicAudio.volume = oldMusicVol;
+    heartbeatAudio.volume = oldHbVol;
+    duckRestoreTimer = null;
+  }, ms);
+}
 
     function tick() {
-      remaining -= 1;
+      remaining -= 1; // seconds only
       timeEl.textContent = remaining;
 
       if (remaining <= 0) {
@@ -481,14 +466,7 @@
     }
 
     async function startTimer() {
-      showSoundGate(false);
-
-      // Unlock base sounds on the user gesture
-      const unlocked = await unlockAudioBase();
-      if (!unlocked) {
-        showSoundGate(true);
-        return;
-      }
+      await unlockAudio(); // <-- mobile fix
 
       const { minS, maxS } = readMinMaxSeconds();
       remaining = randomInt(minS, maxS);
@@ -497,20 +475,8 @@
       statusEl.textContent = "Detonation sequence armed.";
       setUI(true);
 
-      const idx = chooseSongIndex();
-
-      const hbOk = await startHeartbeat();
-      const musicOk = await startMusicWithIndex(idx);
-
-      // If blocked, don't run a silent timer
-      if (!hbOk || !musicOk) {
-        if (timerId) clearInterval(timerId);
-        timerId = null;
-        setUI(false);
-        statusEl.textContent = "Tap to enable sound.";
-        showSoundGate(true);
-        return;
-      }
+      await startHeartbeat();
+      await startMusic();
 
       if (timerId) clearInterval(timerId);
       timerId = setInterval(tick, 1000);
@@ -530,23 +496,13 @@
       timeEl.textContent = "--";
     }
 
-    async function extendTimer() {
+    function extendTimer() {
       if (!running) return;
 
-      remaining += randomInt(3, 10);
+      remaining += randomInt(3, 10); // don't reveal how much
       timeEl.textContent = remaining;
-
       statusEl.textContent = "Timer extended.";
-
-      // ✅ NEW: play extend sound
-      await playExtendSfx();
     }
-
-    enableSoundBtn.addEventListener("click", async () => {
-      showSoundGate(false);
-      await unlockAudioBase();
-      statusEl.textContent = "Sound enabled. Press Start.";
-    });
 
     // init
     refillBag();
@@ -554,6 +510,7 @@
     startBtn.addEventListener("click", startTimer);
     stopBtn.addEventListener("click", stopTimer);
     extendBtn.addEventListener("click", extendTimer);
+    gulagBtn.addEventListener("click", playGulagAnnouncement);
   </script>
 </body>
 </html>
